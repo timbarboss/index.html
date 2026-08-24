@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hand Master AR</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    touch-action: none;
+  }
+  #video, #canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+  }
+  #canvas { z-index: 2; }
+  #ui {
+    position: fixed;
+    top: 10px; left: 10px;
+    z-index: 3;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 16px;
+    pointer-events: none;
+    display: none;
+  }
+  
+  /* ===== СТАРТОВЫЙ ЭКРАН ===== */
+  #startScreen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+  }
+  #startScreen h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #0ff, #f0f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  #startScreen .subtitle {
+    font-size: 16px;
+    color: #aaa;
+    margin-bottom: 30px;
+    max-width: 400px;
+  }
+  .features {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .feature {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 12px;
+    width: 120px;
+    font-size: 14px;
+  }
+  .feature .icon { font-size: 32px; margin-bottom: 8px; }
+  
+  #startBtn {
+    background: linear-gradient(135deg, #0ff, #00a8ff);
+    color: #000;
+    border: none;
+    padding: 18px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(0,255,255,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 15px;
+  }
+  #startBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 50px rgba(0,255,255,0.6);
+  }
+  #startBtn:active { transform: scale(0.98); }
+  #startBtn:disabled {
+    background: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  #permissionNote {
+    font-size: 13px;
+    color: #888;
+    max-width: 350px;
+    line-height: 1.5;
+  }
+  #permissionNote b { color: #0ff; }
+  
+  #errorMsg {
+    color: #ff6b6b;
+    margin-top: 15px;
+    font-size: 14px;
+    max-width: 400px;
+    display: none;
+  }
+  
+  /* ===== ЭКРАН ЗАГРУЗКИ ===== */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: #111;
+    z-index: 15;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 18px;
+  }
+  .spinner {
+    width: 50px; height: 50px;
+    border: 4px solid #333;
+    border-top-color: #0ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* ===== МОДАЛКА ПОВТОРА ===== */
+  #retryModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 25;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+  }
+  #retryModal h2 {
+    font-size: 28px;
+    color: #ff6b6b;
+    margin-bottom: 15px;
+  }
+  #retryModal p {
+    font-size: 15px;
+    color: #ccc;
+    max-width: 400px;
+    margin-bottom: 25px;
+    line-height: 1.6;
+  }
+  #retryBtn {
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    padding: 15px 35px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== СТАРТОВЫЙ ЭКРАН ===== -->
+<div id="startScreen">
+  <h1>🖐️ HAND MASTER AR</h1>
+  <p class="subtitle">Управляй игрой руками через камеру телефона или ПК</p>
+  
+  <div class="features">
+    <div class="feature"><div class="icon">🍎</div>Ловец фруктов</div>
+    <div class="feature"><div class="icon">🎹</div>Пианино</div>
+    <div class="feature"><div class="icon">🎨</div>Кисть</div>
+  </div>
+  
+  <button id="startBtn">📷 РАЗРЕШИТЬ КАМЕРУ И НАЧАТЬ</button>
+  
+  <p id="permissionNote">
+    При нажатии браузер <b>запросит разрешение</b> на использование камеры.<br>
+    Нажми <b>"Разрешить"</b> во всплывающем окне.
+  </p>
+  
+  <div id="errorMsg"></div>
+</div>
+
+<!-- ===== ЭКРАН ЗАГРУЗКИ МОДЕЛИ ===== -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loadingText">Загрузка модели трекинга рук...</div>
+</div>
+
+<!-- ===== МОДАЛКА ПРИ ОТКАЗЕ ===== -->
+<div id="retryModal">
+  <h2>⚠️ Камера недоступна</h2>
+  <p id="retryText">
+    Ты отклонил доступ к камере. Чтобы играть, нужно разрешить доступ.<br><br>
+    <b>Как включить:</b><br>
+    • Chrome: адресная строка → значок замка → Камера → Разрешить<br>
+    • Safari: Настройки → Safari → Камера
+  </p>
+  <button id="retryBtn">🔄 ПОПРОБОВАТЬ СНОВА</button>
+</div>
+
+<!-- ===== ИГРОВОЙ ИНТЕРФЕЙС ===== -->
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+<div id="ui">
+  <div id="score">Очки: 0</div>
+  <div id="info">Сожми большой и указательный палец для клика</div>
+</div>
+
+<!-- MediaPipe Hands -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const infoEl = document.getElementById('info');
+const ui = document.getElementById('ui');
+const startScreen = document.getElementById('startScreen');
+const startBtn = document.getElementById('startBtn');
+const loading = document.getElementById('loading');
+const loadingText = document.getElementById('loadingText');
+const errorMsg = document.getElementById('errorMsg');
+const retryModal = document.getElementById('retryModal');
+const retryBtn = document.getElementById('retryBtn');
+const retryText = document.getElementById('retryText');
+
+let W = 0, H = 0;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ==================== СОСТОЯНИЕ ИГРЫ ====================
+let gameState = 'menu';
+let score = 0;
+let hands = [];
+let prevPinch = [false, false];
+
+const menuButtons = [
+  { id: 'catcher', title: '🍎 ЛОВЕЦ ФРУКТОВ', x: 0, y: 0, w: 0, h: 0, color: '#ff6b6b' },
+  { id: 'piano',   title: '🎹 ПИАНИНО',        x: 0, y: 0, w: 0, h: 0, color: '#4ecdc4' },
+  { id: 'painter', title: '🎨 КИСТЬ',          x: 0, y: 0, w: 0, h: 0, color: '#ffe66d' },
+];
+
+let fallingObjects = [];
+let lastSpawn = 0;
+
+const pianoKeys = [];
+const pianoNotes = [261, 293, 329, 349, 392, 440, 493, 523];
+let audioCtx = null;
+
+let paintTrail = [];
+let currentColor = '#ff00ff';
+const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00'];
+
+// ==================== АУДИО ====================
+function playTone(freq, duration = 0.3) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+// ==================== ЗАПРОС РАЗРЕШЕНИЯ КАМЕРЫ ====================
+async function requestCameraPermission() {
+  startBtn.disabled = true;
+  startBtn.textContent = '⏳ ЗАПРОС РАЗРЕШЕНИЯ...';
+  errorMsg.style.display = 'none';
+  
+  // Сначала проверяем, есть ли API
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showError('Твой браузер не поддерживает доступ к камере. Попробуй Chrome или Safari.');
+    return false;
+  }
+  
+  // Проверяем, в безопасном ли контексте (HTTPS или localhost)
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    showError('Камера работает только по HTTPS. Загрузи файл на GitHub Pages или открой через localhost.');
+    return false;
+  }
+  
+  try {
+    // ЯВНЫЙ ЗАПРОС РАЗРЕШЕНИЯ — здесь браузер покажет системное окно
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { 
+        facingMode: 'user', 
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      },
+      audio: false
+    });
+    
+    // Разрешение получено! Подключаем поток к видео
+    video.srcObject = stream;
+    await video.play();
+    return true;
+    
+  } catch (err) {
+    console.error('Ошибка камеры:', err);
+    
+    // Разные типы ошибок
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      // Пользователь нажал "Запретить"
+      showRetryModal('Ты запретил доступ к камере. Нажми кнопку ниже, чтобы попробовать снова, или разреши доступ в настройках браузера.');
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      showError('Камера не найдена на устройстве.');
+    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      showError('Камера уже используется другим приложением. Закрой другие приложения с камерой.');
+    } else if (err.name === 'OverconstrainedError') {
+      showError('Камера не поддерживает запрошенные параметры.');
+    } else {
+      showError('Ошибка доступа к камере: ' + err.message);
+    }
+    return false;
+  }
+}
+
+function showError(msg) {
+  errorMsg.textContent = '❌ ' + msg;
+  errorMsg.style.display = 'block';
+  startBtn.disabled = false;
+  startBtn.textContent = '📷 РАЗРЕШИТЬ КАМЕРУ И НАЧАТЬ';
+}
+
+function showRetryModal(msg) {
+  retryText.innerHTML = msg;
+  retryModal.style.display = 'flex';
+}
+
+// ==================== КНОПКА СТАРТ ====================
+startBtn.addEventListener('click', async () => {
+  const ok = await requestCameraPermission();
+  if (!ok) return;
+  
+  // Камера работает, запускаем загрузку модели
+  startScreen.style.display = 'none';
+  loading.style.display = 'flex';
+  
+  try {
+    await initHandTracking();
+    loading.style.display = 'none';
+    ui.style.display = 'block';
+    startGameLoop();
+  } catch (e) {
+    loadingText.textContent = 'Ошибка загрузки модели: ' + e.message;
+  }
+});
+
+// ==================== КНОПКА ПОВТОРА ====================
+retryBtn.addEventListener('click', () => {
+  retryModal.style.display = 'none';
+  startBtn.disabled = false;
+  startBtn.textContent = '📷 РАЗРЕШИТЬ КАМЕРУ И НАЧАТЬ';
+});
+
+// ==================== MEDIAPIPE ====================
+let handsTracker = null;
+
+async function initHandTracking() {
+  handsTracker = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  });
+
+  handsTracker.setOptions({
+    maxNumHands: 2,
+    modelComplexity: 0,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.5
+  });
+
+  handsTracker.onResults(onResults);
+
+  const camera = new Camera(video, {
+    onFrame: async () => {
+      if (handsTracker) await handsTracker.send({ image: video });
+    },
+    width: 640,
+    height: 480
+  });
+  camera.start();
+}
+
+function onResults(results) {
+  hands = [];
+  if (results.multiHandLandmarks) {
+    for (const landmarks of results.multiHandLandmarks) {
+      const hand = landmarks.map(p => ({
+        x: (1 - p.x) * W,
+        y: p.y * H,
+        z: p.z
+      }));
+      hands.push(hand);
+    }
+  }
+}
+
+// ==================== ГЕСТИ ====================
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function getPinch(hand) {
+  const thumb = hand[4];
+  const index = hand[8];
+  const dist = distance(thumb, index);
+  const handSize = distance(hand[0], hand[12]);
+  return dist < handSize * 0.35;
+}
+
+function getFingerTip(hand) { return hand[8]; }
+
+function getPalmCenter(hand) {
+  return {
+    x: (hand[0].x + hand[9].x) / 2,
+    y: (hand[0].y + hand[9].y) / 2
+  };
+}
+
+// ==================== ОТРИСОВКА ====================
+function drawHand(hand, color) {
+  const connections = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],
+    [13,17],[17,18],[18,19],[19,20],[0,17]
+  ];
+  
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  for (const [a, b] of connections) {
+    ctx.beginPath();
+    ctx.moveTo(hand[a].x, hand[a].y);
+    ctx.lineTo(hand[b].x, hand[b].y);
+    ctx.stroke();
+  }
+  
+  for (const p of hand) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  const tip = getFingerTip(hand);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(tip.x, tip.y, 15, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawMenu() {
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 32px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('HAND MASTER AR', W/2, 60);
+  ctx.font = '18px Arial';
+  ctx.fillText('Наведи палец и сожми щипок для выбора', W/2, 90);
+  
+  const btnW = Math.min(W * 0.7, 400);
+  const btnH = 80;
+  const startY = H * 0.3;
+  const gap = 30;
+  
+  menuButtons.forEach((btn, i) => {
+    btn.x = W/2 - btnW/2;
+    btn.y = startY + i * (btnH + gap);
+    btn.w = btnW;
+    btn.h = btnH;
+    
+    let hovered = false;
+    for (const hand of hands) {
+      const tip = getFingerTip(hand);
+      if (tip.x > btn.x && tip.x < btn.x + btn.w &&
+          tip.y > btn.y && tip.y < btn.y + btn.h) {
+        hovered = true;
+      }
+    }
+    
+    ctx.fillStyle = hovered ? btn.color : 'rgba(50,50,50,0.8)';
+    ctx.strokeStyle = btn.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 15);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.fillStyle = hovered ? '#000' : '#fff';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(btn.title, btn.x + btn.w/2, btn.y + btn.h/2);
+  });
+}
+
+function drawBackButton() {
+  const btn = { x: 20, y: 20, w: 100, h: 50 };
+  ctx.fillStyle = 'rgba(255,50,50,0.8)';
+  ctx.beginPath();
+  ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 10);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('← МЕНЮ', btn.x + btn.w/2, btn.y + btn.h/2);
+  return btn;
+}
+
+// ==================== ИГРА: ЛОВЕЦ ====================
+function updateCatcher(dt) {
+  lastSpawn += dt;
+  if (lastSpawn > 800) {
+    lastSpawn = 0;
+    fallingObjects.push({
+      x: Math.random() * (W - 60) + 30,
+      y: -30,
+      vy: 3 + Math.random() * 3,
+      r: 25,
+      emoji: ['🍎','🍌','🍊','🍇','🍓'][Math.floor(Math.random()*5)]
+    });
+  }
+  
+  for (let i = fallingObjects.length - 1; i >= 0; i--) {
+    const obj = fallingObjects[i];
+    obj.y += obj.vy;
+    
+    let caught = false;
+    for (const hand of hands) {
+      const palm = getPalmCenter(hand);
+      if (distance(palm, obj) < 60) {
+        caught = true;
+        score += 10;
+        scoreEl.textContent = 'Очки: ' + score;
+        playTone(600 + Math.random() * 400, 0.1);
+        break;
+      }
+    }
+    
+    if (caught || obj.y > H + 50) {
+      fallingObjects.splice(i, 1);
+    }
+  }
+}
+
+function drawCatcher() {
+  ctx.font = '40px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const obj of fallingObjects) {
+    ctx.fillText(obj.emoji, obj.x, obj.y);
+  }
+  
+  for (const hand of hands) {
+    const palm = getPalmCenter(hand);
+    ctx.strokeStyle = 'rgba(0,255,255,0.6)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(palm.x, palm.y, 60, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// ==================== ИГРА: ПИАНИНО ====================
+function initPiano() {
+  pianoKeys.length = 0;
+  const keyW = W / pianoNotes.length;
+  const keyH = H * 0.4;
+  const y = H - keyH;
+  for (let i = 0; i < pianoNotes.length; i++) {
+    pianoKeys.push({
+      x: i * keyW, y, w: keyW, h: keyH,
+      freq: pianoNotes[i],
+      active: false
+    });
+  }
+}
+
+function updatePiano() {
+  for (const key of pianoKeys) key.active = false;
+  
+  for (const hand of hands) {
+    const tips = [8, 12, 16, 20];
+    for (const idx of tips) {
+      const tip = hand[idx];
+      for (const key of pianoKeys) {
+        if (tip.x > key.x && tip.x < key.x + key.w &&
+            tip.y > key.y && tip.y < key.y + key.h) {
+          if (!key.active) {
+            key.active = true;
+            playTone(key.freq, 0.2);
+          }
+        }
+      }
+    }
+  }
+}
+
+function drawPiano() {
+  for (const key of pianoKeys) {
+    ctx.fillStyle = key.active ? '#0ff' : '#fff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.fillRect(key.x, key.y, key.w, key.h);
+    ctx.strokeRect(key.x, key.y, key.w, key.h);
+  }
+}
+
+// ==================== ИГРА: КИСТЬ ====================
+function updatePainter() {
+  for (let i = 0; i < hands.length; i++) {
+    const hand = hands[i];
+    const tip = getFingerTip(hand);
+    
+    if (getPinch(hand) && !prevPinch[i]) {
+      currentColor = colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    paintTrail.push({
+      x: tip.x, y: tip.y,
+      color: currentColor,
+      life: 1
+    });
+  }
+  
+  for (let i = paintTrail.length - 1; i >= 0; i--) {
+    paintTrail[i].life -= 0.005;
+    if (paintTrail[i].life <= 0) paintTrail.splice(i, 1);
+  }
+  
+  if (paintTrail.length > 1000) paintTrail.splice(0, paintTrail.length - 1000);
+}
+
+function drawPainter() {
+  for (const p of paintTrail) {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ==================== ОБРАБОТКА КЛИКОВ ====================
+function handlePinch() {
+  for (let i = 0; i < hands.length; i++) {
+    const hand = hands[i];
+    const pinched = getPinch(hand);
+    const justPinched = pinched && !prevPinch[i];
+    
+    if (justPinched) {
+      const tip = getFingerTip(hand);
+      
+      if (gameState === 'menu') {
+        for (const btn of menuButtons) {
+          if (tip.x > btn.x && tip.x < btn.x + btn.w &&
+              tip.y > btn.y && tip.y < btn.y + btn.h) {
+            gameState = btn.id;
+            score = 0;
+            scoreEl.textContent = 'Очки: 0';
+            if (btn.id === 'piano') initPiano();
+            if (btn.id === 'painter') paintTrail = [];
+            if (btn.id === 'catcher') { fallingObjects = []; lastSpawn = 0; }
+            infoEl.textContent = btn.title;
+            playTone(800, 0.15);
+          }
+        }
+      } else {
+        const back = { x: 20, y: 20, w: 100, h: 50 };
+        if (tip.x > back.x && tip.x < back.x + back.w &&
+            tip.y > back.y && tip.y < back.y + back.h) {
+          gameState = 'menu';
+          infoEl.textContent = 'Сожми большой и указательный палец для клика';
+          playTone(400, 0.15);
+        }
+      }
+    }
+    prevPinch[i] = pinched;
+  }
+}
+
+// ==================== ГЛАВНЫЙ ЦИКЛ ====================
+let lastTime = performance.now();
+let gameLoopRunning = false;
+
+function startGameLoop() {
+  if (gameLoopRunning) return;
+  gameLoopRunning = true;
+  lastTime = performance.now();
+  loop();
+}
+
+function loop() {
+  const now = performance.now();
+  const dt = now - lastTime;
+  lastTime = now;
+  
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+  
+  handlePinch();
+  
+  if (gameState === 'menu') {
+    drawMenu();
+  } else if (gameState === 'catcher') {
+    updateCatcher(dt);
+    drawCatcher();
+  } else if (gameState === 'piano') {
+    updatePiano();
+    drawPiano();
+  } else if (gameState === 'painter') {
+    updatePainter();
+    drawPainter();
+  }
+  
+  const colors = ['#0ff', '#f0f'];
+  hands.forEach((hand, i) => drawHand(hand, colors[i % 2]));
+  
+  if (gameState !== 'menu') drawBackButton();
+  
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+
+// roundRect polyfill
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+</script>
+</body>
+</html>
