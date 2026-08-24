@@ -3,216 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>VR Hand Physics - HD Tracking</title>
+<title>VR Hand Tracking</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-  
-  /* ФИКСАЦИЯ ГОРИЗОНТАЛЬНОЙ ОРИЕНТАЦИИ */
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
   html, body {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    background: #000;
-    font-family: Arial, sans-serif;
-    color: #fff;
+    width: 100vw; height: 100vh; overflow: hidden;
+    background: #000; font-family: Arial, sans-serif; color: #fff;
     touch-action: none;
-  }
-  
-  /* Предупреждение о вертикальной ориентации */
-  #rotateWarning {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    padding: 20px;
-  }
-  #rotateWarning .icon {
-    font-size: 80px;
-    margin-bottom: 20px;
-    animation: rotate 2s ease-in-out infinite;
-  }
-  @keyframes rotate {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(90deg); }
-  }
-  #rotateWarning h2 {
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-  #rotateWarning p {
-    font-size: 16px;
-    color: #aaa;
   }
   
   /* Видео с камеры */
   #video {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
-    z-index: 0;
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    object-fit: cover; z-index: 0;
   }
   
-  /* Канвас для графики */
+  /* Канвас для скелета и объектов */
   #canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
     z-index: 2;
   }
   
   /* VR разделитель */
   #divider {
-    position: fixed;
-    top: 0;
-    left: 50%;
-    width: 4px;
-    height: 100vh;
-    background: #000;
-    z-index: 3;
-    pointer-events: none;
+    position: fixed; top: 0; left: 50%;
+    width: 4px; height: 100vh;
+    background: #000; z-index: 3; pointer-events: none;
   }
   
-  /* UI подсказки */
+  /* UI подсказка */
   #ui {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 4;
-    background: rgba(0,0,0,0.8);
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-size: 16px;
-    pointer-events: none;
-    text-align: center;
-    border: 2px solid rgba(0,210,255,0.5);
-    box-shadow: 0 0 20px rgba(0,210,255,0.3);
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 4; background: rgba(0,0,0,0.8); padding: 8px 16px;
+    border-radius: 20px; font-size: 14px; pointer-events: none;
+    text-align: center; border: 2px solid rgba(0,210,255,0.5);
+    display: none;
   }
   
-  /* ВК Видео */
-  #vkApp {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    display: none;
-    background: #000;
-  }
-  #vkFrame {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
+  /* ВК */
+  #vkApp { position: fixed; inset: 0; z-index: 10; display: none; background: #000; }
+  #vkFrame { width: 100%; height: 100%; border: none; }
   #vkClose {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 11;
-    background: #ff4444;
-    color: #fff;
-    border: 3px solid #fff;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    font-size: 28px;
-    cursor: pointer;
-    display: none;
-    box-shadow: 0 0 15px rgba(0,0,0,0.7);
+    position: fixed; top: 20px; right: 20px; z-index: 11;
+    background: #ff4444; color: #fff; border: 3px solid #fff;
+    width: 60px; height: 60px; border-radius: 50%;
+    font-size: 28px; cursor: pointer; display: none;
   }
   
-  /* Стартовый экран */
+  /* ===== СТАРТОВЫЙ ЭКРАН ===== */
   #startScreen {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
     z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 20px;
-    text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; padding: 20px; text-align: center;
   }
   #startScreen h1 {
-    font-size: 36px;
-    margin-bottom: 15px;
+    font-size: 32px; margin-bottom: 15px;
     background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  #startScreen .subtitle {
+    font-size: 15px; color: #aaa; margin-bottom: 20px; max-width: 500px; line-height: 1.5;
   }
   .instructions {
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    padding: 25px;
-    border-radius: 15px;
-    margin-bottom: 25px;
-    max-width: 500px;
-    text-align: left;
-    font-size: 16px;
-    line-height: 1.8;
+    background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
+    padding: 20px; border-radius: 15px; margin-bottom: 25px;
+    max-width: 500px; text-align: left; font-size: 14px; line-height: 1.8;
   }
-  .instructions b {
-    color: #00d2ff;
-  }
+  .instructions b { color: #00d2ff; }
+  
   #startBtn {
     background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-    color: #fff;
-    border: none;
-    padding: 20px 50px;
-    font-size: 20px;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
+    color: #fff; border: none;
+    padding: 20px 50px; font-size: 20px; font-weight: bold;
+    border-radius: 50px; cursor: pointer;
     box-shadow: 0 0 30px rgba(0,210,255,0.5);
     transition: transform 0.2s;
   }
-  #startBtn:hover {
-    transform: scale(1.05);
-  }
-  #startBtn:disabled {
-    background: #555;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
+  #startBtn:hover { transform: scale(1.05); }
+  #startBtn:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+  
   #errorMsg {
-    color: #ff6b6b;
-    margin-top: 15px;
-    font-size: 14px;
-    display: none;
+    color: #ff6b6b; margin-top: 15px; font-size: 14px;
+    max-width: 400px; display: none;
   }
   
-  /* Загрузка */
+  /* ===== ЭКРАН ЗАГРУЗКИ ===== */
   #loading {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 15;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
+    position: fixed; inset: 0; background: #000; z-index: 15;
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; font-size: 18px;
   }
   .spinner {
-    width: 60px;
-    height: 60px;
-    border: 5px solid #333;
-    border-top-color: #00d2ff;
+    width: 60px; height: 60px;
+    border: 5px solid #333; border-top-color: #00d2ff;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+    animation: spin 1s linear infinite; margin-bottom: 20px;
   }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* ===== ПРЕДУПРЕЖДЕНИЕ ОРИЕНТАЦИИ ===== */
+  #rotateWarning {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #0f0c29, #302b63);
+    z-index: 50;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column; text-align: center; padding: 20px;
   }
+  #rotateWarning .icon {
+    font-size: 80px; margin-bottom: 20px;
+    animation: rotatePhone 2s ease-in-out infinite;
+  }
+  @keyframes rotatePhone {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
+  #rotateWarning h2 { font-size: 24px; margin-bottom: 10px; }
+  #rotateWarning p { font-size: 16px; color: #aaa; }
 </style>
 </head>
 <body>
@@ -224,25 +135,32 @@
   <p>Игра работает только в ландшафтном режиме</p>
 </div>
 
+<!-- Стартовый экран с кнопкой -->
 <div id="startScreen">
-  <h1>🥽 VR HAND PHYSICS HD</h1>
+  <h1>🥽 VR HAND TRACKING</h1>
+  <p class="subtitle">Точный трекинг рук со скелетом. Положи телефон в VR-шлем задней камерой наружу.</p>
+  
   <div class="instructions">
-    📱 <b>Ориентация:</b> Только горизонтальная (landscape)<br><br>
-    👆👆 <b>Двойной щипок:</b> Открыть/закрыть меню<br>
-    🤏 <b>Одинарный щипок:</b> Взять предмет<br>
-    📺 <b>Иконка VK:</b> Смотреть видео<br>
+    📱 <b>Ориентация:</b> Только горизонтальная<br><br>
+    👆👆 <b>Двойной щипок:</b> Открыть меню приложений<br>
+    🤏 <b>Щипок:</b> Взять предмет / выбрать приложение<br>
+    👈👉 <b>Свайп рукой:</b> Листать категории меню<br>
     👇 <b>Руки вниз:</b> Калибровка пола<br><br>
-    <b>✨ HD Трекинг:</b> One Euro Filter для плавности
+    <b>📱 Приложения:</b> Погода, Крипта, Акции, Спорт,<br>
+    Рецепты, Покупки, Бюджет, Пароли, VPN, VK Video
   </div>
-  <button id="startBtn">ЗАПУСТИТЬ VR</button>
+  
+  <button id="startBtn">▶ НАЧАТЬ</button>
   <div id="errorMsg"></div>
 </div>
 
+<!-- Экран загрузки -->
 <div id="loading">
   <div class="spinner"></div>
-  <div style="color:#aaa; font-size:18px">Загрузка нейросети...</div>
+  <div id="loadingText">Запуск камеры и трекинга...</div>
 </div>
 
+<!-- Игровые элементы -->
 <video id="video" autoplay playsinline muted></video>
 <canvas id="canvas"></canvas>
 <div id="divider"></div>
@@ -253,10 +171,12 @@
 </div>
 <button id="vkClose">✕</button>
 
+<!-- MediaPipe -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 <script>
+// ==================== ЭЛЕМЕНТЫ ====================
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -264,11 +184,12 @@ const ui = document.getElementById('ui');
 const startScreen = document.getElementById('startScreen');
 const startBtn = document.getElementById('startBtn');
 const loading = document.getElementById('loading');
+const loadingText = document.getElementById('loadingText');
 const errorMsg = document.getElementById('errorMsg');
+const rotateWarning = document.getElementById('rotateWarning');
 const vkApp = document.getElementById('vkApp');
 const vkFrame = document.getElementById('vkFrame');
 const vkClose = document.getElementById('vkClose');
-const rotateWarning = document.getElementById('rotateWarning');
 
 let W = 0, H = 0;
 
@@ -277,15 +198,13 @@ function checkOrientation() {
   const isLandscape = window.innerWidth > window.innerHeight;
   rotateWarning.style.display = isLandscape ? 'none' : 'flex';
 }
-
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
   checkOrientation();
 }
-
 window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 100));
+window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 300));
 resize();
 
 // ==================== 3D МАТЕМАТИКА ====================
@@ -300,170 +219,172 @@ class Vec3 {
   distTo(v){return this.sub(v).len();}
 }
 
-// ==================== ONE EURO FILTER ====================
-// Продвинутый фильтр для плавного трекинга
+// One Euro Filter для плавности
 class OneEuroFilter {
   constructor(freq=30, mincutoff=1, beta=0.007, dcutoff=1) {
-    this.freq = freq;
-    this.mincutoff = mincutoff;
-    this.beta = beta;
-    this.dcutoff = dcutoff;
-    this.x = null;
-    this.dx = 0;
-    this.lastTime = null;
+    this.freq = freq; this.mincutoff = mincutoff; this.beta = beta; this.dcutoff = dcutoff;
+    this.x = null; this.dx = 0; this.lastTime = null;
   }
-  
   alpha(cutoff) {
     const te = 1.0 / this.freq;
     const tau = 1.0 / (2 * Math.PI * cutoff);
     return 1.0 / (1.0 + tau / te);
   }
-  
-  filter(x, timestamp=null) {
-    if (this.x === null) {
-      this.x = x;
-      this.dx = 0;
-      this.lastTime = timestamp;
-      return x;
-    }
-    
-    const prevTime = this.lastTime || timestamp;
-    const te = timestamp ? (timestamp - prevTime) : (1.0 / this.freq);
-    this.freq = 1.0 / te;
-    
+  filter(x, timestamp) {
+    if (this.x === null) { this.x = x; this.lastTime = timestamp; return x; }
+    const te = timestamp ? (timestamp - this.lastTime) : (1.0 / this.freq);
+    this.freq = 1.0 / Math.max(te, 0.001);
     const dx = (x - this.x) / te;
     const edx = this.alpha(this.dcutoff);
     this.dx = edx * dx + (1 - edx) * this.dx;
-    
     const cutoff = this.mincutoff + this.beta * Math.abs(this.dx);
     const ax = this.alpha(cutoff);
     this.x = ax * x + (1 - ax) * this.x;
-    
     this.lastTime = timestamp;
     return this.x;
   }
 }
 
-// ==================== VR ПАРАМЕТРЫ ====================
+// VR параметры
 const CAM_Y = 1.6;
 const EYE_OFFSET = 0.032;
 const FOV_SCALE = 1.2;
 
 function project(p, eyeSign, halfW, offX) {
-  const camX = eyeSign * EYE_OFFSET;
-  const dx = p.x - camX;
+  const dx = p.x - eyeSign * EYE_OFFSET;
   const dy = p.y - CAM_Y;
   const dz = p.z;
-  
   if (dz < 0.1) return { visible: false };
-  
   const scale = 1 / (dz * FOV_SCALE);
-  const sx = offX + halfW/2 + dx * scale * halfW;
-  const sy = H/2 - dy * scale * H;
-  
-  return { x: sx, y: sy, scale, visible: true, depth: dz };
+  return {
+    x: offX + halfW/2 + dx * scale * halfW,
+    y: H/2 - dy * scale * H,
+    scale, visible: true, depth: dz
+  };
 }
 
 // ==================== КАМЕРА ====================
 async function requestCamera() {
-  startBtn.disabled = true;
-  startBtn.textContent = '⏳ ПОДКЛЮЧЕНИЕ...';
-  
+  loadingText.textContent = 'Запрос разрешения камеры...';
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { 
-        facingMode: 'environment',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       },
       audio: false
     });
     video.srcObject = stream;
+    await new Promise((resolve, reject) => {
+      video.onloadedmetadata = resolve;
+      video.onerror = reject;
+      setTimeout(reject, 5000);
+    });
     await video.play();
     return true;
   } catch (e) {
     errorMsg.style.display = 'block';
-    errorMsg.textContent = 'Ошибка камеры: ' + e.message + '. Нужен HTTPS.';
+    errorMsg.textContent = '❌ Ошибка камеры: ' + e.message + '. Нужен HTTPS.';
     startBtn.disabled = false;
+    startBtn.textContent = '▶ НАЧАТЬ';
     return false;
   }
 }
 
-// ==================== MEDIAPIPE + ONE EURO FILTER ====================
+// ==================== ТРЕКИНГ РУК ====================
 let handsTracker = null;
-let smoothHands = [];
-let filters = []; // One Euro Filter для каждой точки каждой руки
+let hands2D = [];      // 2D координаты в пикселях экрана (для скелета)
+let hands3D = [];      // 3D координаты в мире (для физики)
+let filters2D = [];    // One Euro фильтры для 2D
+let filters3D = [];    // One Euro фильтры для 3D
 
-// Инициализация фильтров
-function initFilters(numHands) {
-  filters = [];
-  for (let h = 0; h < numHands; h++) {
-    const handFilters = [];
-    for (let i = 0; i < 21; i++) {
-      handFilters.push({
-        x: new OneEuroFilter(30, 1.0, 0.007),
-        y: new OneEuroFilter(30, 1.0, 0.007),
-        z: new OneEuroFilter(30, 1.0, 0.007)
-      });
-    }
-    filters.push(handFilters);
+// Преобразование landmarks в 2D экранные координаты (для точного скелета)
+function landmarksToScreen(landmarks) {
+  // videoWidth/videoHeight могут отличаться от canvas
+  const vw = video.videoWidth || 1280;
+  const vh = video.videoHeight || 720;
+  
+  // Вычисляем как видео отображается на экране (object-fit: cover)
+  const screenAspect = W / H;
+  const videoAspect = vw / vh;
+  
+  let scale, offsetX, offsetY;
+  if (videoAspect > screenAspect) {
+    // Видео шире экрана — обрезаем по бокам
+    scale = W / vw;
+    offsetX = 0;
+    offsetY = (H - vh * scale) / 2;
+  } else {
+    // Видео уже экрана — обрезаем сверху/снизу
+    scale = H / vh;
+    offsetX = (W - vw * scale) / 2;
+    offsetY = 0;
   }
+  
+  return landmarks.map(p => {
+    // Для задней камеры НЕ зеркалим
+    const sx = p.x * vw * scale + offsetX;
+    const sy = p.y * vh * scale + offsetY;
+    return { x: sx, y: sy };
+  });
 }
 
+// Преобразование landmarks в 3D мир (для физики и меню)
 function landmarksToWorld(landmarks, handIndex, timestamp) {
   const wrist = landmarks[0];
   const middleBase = landmarks[9];
   const pixelSize = Math.hypot(wrist.x - middleBase.x, wrist.y - middleBase.y);
+  let depth = Math.min(Math.max(0.18 / (pixelSize + 0.001), 0.3), 2.0);
+  const aspect = (video.videoWidth || 1280) / (video.videoHeight || 720);
   
-  let depth = 0.18 / (pixelSize + 0.001);
-  depth = Math.min(Math.max(depth, 0.3), 2.0);
-  
-  const aspect = video.videoWidth / video.videoHeight;
-  
-  // Инициализируем фильтры если нужно
-  if (!filters[handIndex]) {
-    const handFilters = [];
+  if (!filters3D[handIndex]) {
+    filters3D[handIndex] = [];
     for (let i = 0; i < 21; i++) {
-      handFilters.push({
+      filters3D[handIndex].push({
         x: new OneEuroFilter(30, 1.0, 0.007),
         y: new OneEuroFilter(30, 1.0, 0.007),
         z: new OneEuroFilter(30, 1.0, 0.007)
       });
     }
-    filters[handIndex] = handFilters;
   }
   
   return landmarks.map((p, i) => {
-    const rawX = -(p.x - 0.5) * depth * aspect * 1.5;
+    const rawX = (p.x - 0.5) * depth * aspect * 1.5;
     const rawY = CAM_Y - (p.y - 0.5) * depth * 1.5;
     const rawZ = depth - p.z * 0.2;
-    
-    // Применяем One Euro Filter
-    const filteredX = filters[handIndex][i].x.filter(rawX, timestamp);
-    const filteredY = filters[handIndex][i].y.filter(rawY, timestamp);
-    const filteredZ = filters[handIndex][i].z.filter(rawZ, timestamp);
-    
-    return new Vec3(filteredX, filteredY, filteredZ);
+    return new Vec3(
+      filters3D[handIndex][i].x.filter(rawX, timestamp),
+      filters3D[handIndex][i].y.filter(rawY, timestamp),
+      filters3D[handIndex][i].z.filter(rawZ, timestamp)
+    );
   });
 }
 
 async function initHandTracking() {
+  loadingText.textContent = 'Загрузка нейросети...';
+  
   handsTracker = new Hands({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
   });
   
   handsTracker.setOptions({
     maxNumHands: 2,
-    modelComplexity: 1, // 1 = высокая точность
+    modelComplexity: 1,
     minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.7
+    minTrackingConfidence: 0.6
   });
-
+  
   handsTracker.onResults(onResults);
-
+  
+  loadingText.textContent = 'Запуск трекинга...';
+  
   const camera = new Camera(video, {
-    onFrame: async () => { 
-      if (handsTracker) await handsTracker.send({ image: video }); 
+    onFrame: async () => {
+      if (handsTracker) {
+        try { await handsTracker.send({ image: video }); }
+        catch(e) { console.error(e); }
+      }
     },
     width: 1280,
     height: 720
@@ -473,131 +394,316 @@ async function initHandTracking() {
 
 function onResults(results) {
   const timestamp = performance.now();
-  let rawHands = [];
+  hands2D = [];
+  hands3D = [];
   
   if (results.multiHandLandmarks) {
     for (let i = 0; i < results.multiHandLandmarks.length; i++) {
       const lm = results.multiHandLandmarks[i];
-      rawHands.push(landmarksToWorld(lm, i, timestamp));
+      hands2D.push(landmarksToScreen(lm));
+      hands3D.push(landmarksToWorld(lm, i, timestamp));
     }
   }
-  
-  smoothHands = rawHands;
 }
 
 // ==================== ЖЕСТЫ ====================
-function dist3(a, b) { return a.sub(b).len(); }
+function dist2D(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function dist3(a, b) { return a.distTo(b); }
 
-function isPinch(hand) {
-  const d = dist3(hand[4], hand[8]);
-  const size = dist3(hand[0], hand[9]);
-  return d < size * 0.4;
+// Щипок в 3D
+function isPinch3D(hand) {
+  return dist3(hand[4], hand[8]) < dist3(hand[0], hand[9]) * 0.4;
+}
+
+// Щипок в 2D (для визуальной обратной связи)
+function isPinch2D(hand) {
+  return dist2D(hand[4], hand[8]) < dist2D(hand[0], hand[9]) * 0.4;
 }
 
 let lastTapTime = [0, 0];
 function checkDoubleTap(handIndex, now) {
-  const timeSinceLast = now - lastTapTime[handIndex];
-  if (timeSinceLast < 400 && timeSinceLast > 50) {
-    lastTapTime[handIndex] = 0;
-    return true;
-  }
+  const t = now - lastTapTime[handIndex];
+  if (t < 500 && t > 80) { lastTapTime[handIndex] = 0; return true; }
   lastTapTime[handIndex] = now;
   return false;
+}
+
+// Свайп
+let prevHandX = [null, null];
+let swipeAccum = [0, 0];
+function detectSwipe(handIndex, hand) {
+  const x = hand[0].x;
+  if (prevHandX[handIndex] !== null) {
+    const dx = x - prevHandX[handIndex];
+    swipeAccum[handIndex] += dx;
+    if (Math.abs(swipeAccum[handIndex]) > 0.3) {
+      const dir = swipeAccum[handIndex] > 0 ? 'right' : 'left';
+      swipeAccum[handIndex] = 0;
+      prevHandX[handIndex] = x;
+      return dir;
+    }
+  }
+  prevHandX[handIndex] = x;
+  return null;
 }
 
 // ==================== МИР ====================
 let floorY = 0.0;
 let objects = [];
-let menuVisible = false;
-let menuItems = [];
 
 class PhysObject {
   constructor(pos, shape, color, size=0.08) {
-    this.pos = pos.clone();
-    this.vel = new Vec3(0,0,0);
-    this.shape = shape;
-    this.color = color;
-    this.size = size;
-    this.held = false;
-    this.heldByHand = -1;
-    this.holdOffset = new Vec3();
-    this.history = [];
-    this.rotation = Math.random() * 6;
+    this.pos = pos.clone(); this.vel = new Vec3(); this.shape = shape;
+    this.color = color; this.size = size;
+    this.held = false; this.heldByHand = -1; this.holdOffset = new Vec3();
+    this.history = []; this.rotation = Math.random() * 6;
   }
-  
   update(dt, now) {
     if (this.held) {
-      const hand = smoothHands[this.heldByHand];
-      if (hand && isPinch(hand)) {
+      const hand = hands3D[this.heldByHand];
+      if (hand && isPinch3D(hand)) {
         const target = hand[8].add(this.holdOffset);
         this.pos = target;
         this.history.push({ pos: target.clone(), time: now });
         if (this.history.length > 4) this.history.shift();
-      } else {
-        this.release();
-      }
+      } else this.release();
     } else {
       this.vel.y -= 15 * dt;
       this.pos = this.pos.add(this.vel.mul(dt));
-      
       if (this.pos.y < floorY + this.size) {
         this.pos.y = floorY + this.size;
-        this.vel.y *= -0.5;
-        this.vel.x *= 0.9;
-        this.vel.z *= 0.9;
+        this.vel.y *= -0.5; this.vel.x *= 0.9; this.vel.z *= 0.9;
       }
-      
       if (Math.abs(this.pos.x) > 2.5) { this.pos.x = Math.sign(this.pos.x)*2.5; this.vel.x *= -0.5; }
       if (this.pos.z < 0.2) { this.pos.z = 0.2; this.vel.z *= -0.5; }
       if (this.pos.z > 4) { this.pos.z = 4; this.vel.z *= -0.5; }
     }
     this.rotation += this.vel.x * dt;
   }
-  
   release() {
     if (this.history.length >= 2) {
       const last = this.history[this.history.length-1];
       const first = this.history[0];
       const dt = (last.time - first.time) / 1000;
-      if (dt > 0) {
-        this.vel = last.pos.sub(first.pos).mul(1/dt);
-      }
+      if (dt > 0) this.vel = last.pos.sub(first.pos).mul(1/dt);
     }
-    this.held = false;
-    this.heldByHand = -1;
-    this.history = [];
+    this.held = false; this.heldByHand = -1; this.history = [];
   }
 }
 
-function buildMenu(centerPos) {
-  menuItems = [];
-  const items = [
-    { shape: 'cube', color: '#ff4757', label: 'КУБ' },
-    { shape: 'sphere', color: '#2ed573', label: 'ШАР' },
-    { shape: 'cylinder', color: '#ffa502', label: 'ЦИЛИНДР' },
-    { shape: 'pyramid', color: '#a4b0be', label: 'ПИРАМИДА' },
-    { shape: 'vk', color: '#0077FF', label: 'VK VIDEO' }
+// ==================== ПРИЛОЖЕНИЯ ====================
+const APPS = {
+  games: [
+    { id: 'cube',     icon: '▣', color: '#ff4757', label: 'КУБ',       type: 'object' },
+    { id: 'sphere',   icon: '●', color: '#2ed573', label: 'ШАР',       type: 'object' },
+    { id: 'cylinder', icon: '▮', color: '#ffa502', label: 'ЦИЛИНДР',   type: 'object' },
+    { id: 'pyramid',  icon: '▲', color: '#a4b0be', label: 'ПИРАМИДА',  type: 'object' },
+    { id: 'vk',       icon: '▶', color: '#0077FF', label: 'VK VIDEO',  type: 'vk' },
+  ],
+  utils: [
+    { id: 'weather',  icon: '☀', color: '#3498db', label: 'ПОГОДА',    type: 'app' },
+    { id: 'news',     icon: '📰', color: '#e67e22', label: 'НОВОСТИ',   type: 'app' },
+    { id: 'recipes',  icon: '🍳', color: '#e74c3c', label: 'РЕЦЕПТЫ',   type: 'app' },
+    { id: 'shopping', icon: '🛒', color: '#27ae60', label: 'ПОКУПКИ',   type: 'app' },
+    { id: 'vpn',      icon: '🔒', color: '#8e44ad', label: 'VPN',       type: 'app' },
+  ],
+  finance: [
+    { id: 'crypto',   icon: '₿', color: '#f39c12', label: 'КРИПТА',    type: 'app' },
+    { id: 'stocks',   icon: '📈', color: '#16a085', label: 'АКЦИИ',     type: 'app' },
+    { id: 'budget',   icon: '💰', color: '#2ecc71', label: 'БЮДЖЕТ',    type: 'app' },
+    { id: 'passwords',icon: '🔑', color: '#34495e', label: 'ПАРОЛИ',    type: 'app' },
+    { id: 'sports',   icon: '⚽', color: '#d35400', label: 'СПОРТ',     type: 'app' },
+  ]
+};
+
+const CATEGORIES = [
+  { id: 'games',   label: '🎮 ИГРЫ',     color: '#ff4757' },
+  { id: 'utils',   label: '🔧 УТИЛИТЫ',  color: '#3498db' },
+  { id: 'finance', label: '💵 ФИНАНСЫ',  color: '#2ecc71' }
+];
+
+let menuVisible = false;
+let currentCategory = 0;
+let activeApp = null;
+let appData = {};
+
+// Загрузка данных
+async function loadWeather() {
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current_weather=true');
+    const data = await res.json();
+    appData.weather = {
+      temp: data.current_weather.temperature,
+      wind: data.current_weather.windspeed,
+      code: data.current_weather.weathercode
+    };
+  } catch (e) {
+    appData.weather = { temp: 18, wind: 5, code: 1, error: true };
+  }
+}
+
+async function loadCrypto() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,solana&vs_currencies=usd&include_24hr_change=true');
+    const data = await res.json();
+    appData.crypto = [
+      { name: 'Bitcoin',  symbol: 'BTC',  price: data.bitcoin.usd,  change: data.bitcoin.usd_24h_change },
+      { name: 'Ethereum', symbol: 'ETH',  price: data.ethereum.usd, change: data.ethereum.usd_24h_change },
+      { name: 'Tether',   symbol: 'USDT', price: data.tether.usd,   change: data.tether.usd_24h_change },
+      { name: 'Solana',   symbol: 'SOL',  price: data.solana.usd,   change: data.solana.usd_24h_change },
+    ];
+  } catch (e) {
+    appData.crypto = [
+      { name: 'Bitcoin',  symbol: 'BTC',  price: 65432, change: 2.3 },
+      { name: 'Ethereum', symbol: 'ETH',  price: 3456,  change: -1.2 },
+      { name: 'Tether',   symbol: 'USDT', price: 1.00,  change: 0.01 },
+      { name: 'Solana',   symbol: 'SOL',  price: 145,   change: 5.6 },
+    ];
+  }
+}
+
+function loadMockData() {
+  appData.news = [
+    { title: 'VR технологии вышли на новый уровень', source: 'TechNews', time: '2ч' },
+    { title: 'ИИ научился управлять руками роботов', source: 'AI Daily', time: '4ч' },
+    { title: 'Новый iPhone с AR-функциями', source: 'Apple Insider', time: '6ч' },
+    { title: 'Meta представила Quest 4', source: 'VR World', time: '8ч' },
   ];
+  appData.stocks = [
+    { name: 'Apple',    symbol: 'AAPL', price: 189.45, change: 1.23 },
+    { name: 'Google',   symbol: 'GOOG', price: 142.67, change: -0.45 },
+    { name: 'Microsoft',symbol: 'MSFT', price: 425.12, change: 2.15 },
+    { name: 'Tesla',    symbol: 'TSLA', price: 245.89, change: -3.21 },
+  ];
+  appData.sports = [
+    { match: 'Реал Мадрид - Барселона', score: '2:1', status: 'LIVE', league: 'Ла Лига' },
+    { match: 'Лейкерс - Селтикс',       score: '105:98', status: 'LIVE', league: 'NBA' },
+    { match: 'Ман Сити - Ливерпуль',    score: '18:30', status: 'Скоро', league: 'АПЛ' },
+    { match: 'Бавария - Дортмунд',      score: '20:00', status: 'Скоро', league: 'Бундеслига' },
+  ];
+  appData.recipes = [
+    { name: 'Паста Карбонара', time: '25 мин', difficulty: '⭐⭐' },
+    { name: 'Борщ',            time: '2 часа', difficulty: '⭐⭐⭐' },
+    { name: 'Цезарь с курицей',time: '30 мин', difficulty: '⭐' },
+    { name: 'Тирамису',        time: '4 часа', difficulty: '⭐⭐⭐' },
+  ];
+  appData.shopping = [
+    { item: 'Молоко', qty: '2 л', done: false },
+    { item: 'Хлеб',   qty: '1 шт', done: true },
+    { item: 'Яблоки', qty: '1 кг', done: false },
+    { item: 'Сыр',    qty: '300 г', done: false },
+  ];
+  appData.budget = {
+    income: 100000,
+    expenses: [
+      { cat: 'Еда',        amount: 25000, color: '#e74c3c' },
+      { cat: 'Транспорт',  amount: 8000,  color: '#3498db' },
+      { cat: 'Жильё',      amount: 40000, color: '#2ecc71' },
+      { cat: 'Развлечения',amount: 15000, color: '#f39c12' },
+    ]
+  };
+  appData.passwords = [
+    { site: 'vk.com',      login: 'user123', strength: '🟢' },
+    { site: 'gmail.com',   login: 'user@gmail', strength: '🟢' },
+    { site: 'github.com',  login: 'dev_user', strength: '🟡' },
+    { site: 'bank.ru',     login: 'client', strength: '🟢' },
+  ];
+  appData.vpn = {
+    status: 'ОТКЛ',
+    server: 'Нидерланды',
+    ip: '185.xxx.xxx.xxx',
+    speed: '0 Мбит/с',
+    servers: ['🇳🇱 Нидерланды', '🇺🇸 США', '🇩🇪 Германия', '🇯🇵 Япония', '🇷🇺 Россия']
+  };
+}
+
+async function loadAllData() {
+  loadMockData();
+  await Promise.all([loadWeather(), loadCrypto()]);
+}
+
+// ==================== МЕНЮ ====================
+function buildMenu(centerPos) {
+  menuVisible = true;
+  const items = APPS[CATEGORIES[currentCategory].id];
+  const cols = items.length;
+  const spacing = 0.22;
+  const startX = centerPos.x - (cols - 1) * spacing / 2;
   
   items.forEach((item, i) => {
-    const angle = -Math.PI/2 + (i / (items.length-1)) * Math.PI;
-    const radius = 0.4;
-    const pos = new Vec3(
-      centerPos.x + Math.cos(angle) * radius,
-      centerPos.y + Math.sin(angle) * radius * 0.5,
-      centerPos.z - 0.2
+    item.pos = new Vec3(
+      startX + i * spacing,
+      centerPos.y + 0.15,
+      centerPos.z - 0.3
     );
-    menuItems.push({ ...item, pos, id: i });
   });
 }
 
-// ==================== ОТРИСОВКА ====================
+// ==================== ОТРИСОВКА 2D СКЕЛЕТА РУК ====================
+// КЛЮЧЕВАЯ ФУНКЦИЯ: скелет рисуется ПРЯМО НА ВИДЕО в 2D координатах
+function drawHands2D() {
+  const connections = [
+    [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12], [9,13],[13,14],[14,15],[15,16],
+    [13,17],[17,18],[18,19],[19,20],[0,17]
+  ];
+  
+  const colors = ['#00d2ff', '#ff00ea'];
+  
+  hands2D.forEach((hand, hi) => {
+    const color = colors[hi % 2];
+    
+    // Рисуем кости
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    
+    for (const [a, b] of connections) {
+      ctx.beginPath();
+      ctx.moveTo(hand[a].x, hand[a].y);
+      ctx.lineTo(hand[b].x, hand[b].y);
+      ctx.stroke();
+    }
+    
+    ctx.shadowBlur = 0;
+    
+    // Рисуем суставы
+    for (let i = 0; i < hand.length; i++) {
+      const isTip = [4,8,12,16,20].includes(i);
+      ctx.fillStyle = isTip ? '#fff' : color;
+      ctx.beginPath();
+      ctx.arc(hand[i].x, hand[i].y, isTip ? 6 : 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+    
+    // Курсор на указательном
+    const tip = hand[8];
+    const pinched = isPinch2D(hand);
+    ctx.strokeStyle = pinched ? '#ffff00' : 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(tip.x, tip.y, pinched ? 18 : 12, 0, Math.PI*2);
+    ctx.stroke();
+    
+    if (pinched) {
+      ctx.fillStyle = 'rgba(255,255,0,0.3)';
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, 18, 0, Math.PI*2);
+      ctx.fill();
+    }
+  });
+}
+
+// ==================== ОТРИСОВКА 3D ОБЪЕКТОВ ====================
 function drawObject(obj, eyeSign, halfW, offX) {
   const p = project(obj.pos, eyeSign, halfW, offX);
   if (!p.visible) return;
   const size = obj.size * p.scale * halfW * 1.5;
   if (size < 1) return;
-
+  
   const sProj = project(new Vec3(obj.pos.x, floorY, obj.pos.z), eyeSign, halfW, offX);
   if (sProj.visible) {
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -605,22 +711,17 @@ function drawObject(obj, eyeSign, halfW, offX) {
     ctx.ellipse(sProj.x, sProj.y, size*0.8, size*0.3, 0, 0, Math.PI*2);
     ctx.fill();
   }
-
+  
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.rotate(obj.rotation);
   ctx.fillStyle = obj.color;
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 2;
-
+  
   if (obj.shape === 'cube') {
     ctx.fillRect(-size, -size, size*2, size*2);
     ctx.strokeRect(-size, -size, size*2, size*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath();
-    ctx.moveTo(size, -size); ctx.lineTo(size*1.2, -size*1.2);
-    ctx.lineTo(size*1.2, size*0.8); ctx.lineTo(size, size);
-    ctx.fill();
   } else if (obj.shape === 'sphere') {
     const g = ctx.createRadialGradient(-size*0.3, -size*0.3, 0, 0, 0, size);
     g.addColorStop(0, '#fff'); g.addColorStop(0.4, obj.color); g.addColorStop(1, '#000');
@@ -629,17 +730,10 @@ function drawObject(obj, eyeSign, halfW, offX) {
   } else if (obj.shape === 'cylinder') {
     ctx.fillRect(-size*0.6, -size, size*1.2, size*2);
     ctx.strokeRect(-size*0.6, -size, size*1.2, size*2);
-    ctx.beginPath(); ctx.ellipse(0, -size, size*0.6, size*0.2, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
   } else if (obj.shape === 'pyramid') {
     ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(-size, size); ctx.lineTo(size, size); ctx.fill(); ctx.stroke();
-  } else if (obj.shape === 'vk') {
-    ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = `bold ${size}px Arial`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('VK', 0, 0);
   }
-
+  
   if (obj.held) {
     ctx.strokeStyle = '#0ff'; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(0, 0, size*1.3, 0, Math.PI*2); ctx.stroke();
@@ -647,47 +741,250 @@ function drawObject(obj, eyeSign, halfW, offX) {
   ctx.restore();
 }
 
-function drawHands(eyeSign, halfW, offX) {
-  const connections = [
-    [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8],
-    [5,9],[9,10],[10,11],[11,12], [9,13],[13,14],[14,15],[15,16],
-    [13,17],[17,18],[18,19],[19,20],[0,17]
-  ];
+// ==================== МЕНЮ 3D ====================
+function drawMenu(eyeSign, halfW, offX) {
+  if (!menuVisible) return;
   
-  smoothHands.forEach((hand, hi) => {
-    const color = hi === 0 ? '#00d2ff' : '#ff00ea';
+  const cat = CATEGORIES[currentCategory];
+  const titlePos = project(new Vec3(0, CAM_Y + 0.4, 1.0), eyeSign, halfW, offX);
+  if (titlePos.visible) {
+    ctx.fillStyle = cat.color;
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(cat.label, titlePos.x, titlePos.y);
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px Arial';
+    ctx.fillText(`${currentCategory + 1} / ${CATEGORIES.length}  ← свайп →`, titlePos.x, titlePos.y + 25);
+  }
+  
+  const items = APPS[cat.id];
+  items.forEach((item, i) => {
+    const p = project(item.pos, eyeSign, halfW, offX);
+    if (!p.visible) return;
+    const size = 0.08 * p.scale * halfW * 1.5;
     
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    for (const [a, b] of connections) {
-      const pa = project(hand[a], eyeSign, halfW, offX);
-      const pb = project(hand[b], eyeSign, halfW, offX);
-      if (pa.visible && pb.visible) {
-        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
-      }
+    let hovered = false;
+    for (const hand of hands3D) {
+      if (dist3(hand[8], item.pos) < 0.08) hovered = true;
     }
     
-    for (let i = 0; i < hand.length; i++) {
-      const pp = project(hand[i], eyeSign, halfW, offX);
-      if (pp.visible) {
-        ctx.fillStyle = [4,8,12,16,20].includes(i) ? '#fff' : color;
-        ctx.beginPath(); ctx.arc(pp.x, pp.y, [4,8,12,16,20].includes(i) ? 7 : 4, 0, Math.PI*2); ctx.fill();
-      }
-    }
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.fillStyle = hovered ? item.color : 'rgba(20,20,40,0.9)';
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = hovered ? 4 : 2;
+    ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     
-    const tip = project(hand[8], eyeSign, halfW, offX);
-    if (tip.visible) {
-      const pinched = isPinch(hand);
-      ctx.strokeStyle = pinched ? '#ffff00' : 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(tip.x, tip.y, 12, 0, Math.PI*2); ctx.stroke();
-    }
+    ctx.fillStyle = hovered ? '#000' : '#fff';
+    ctx.font = `bold ${size*0.9}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(item.icon, 0, 0);
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${size*0.35}px Arial`;
+    ctx.fillText(item.label, 0, size * 1.4);
+    ctx.restore();
   });
 }
 
+// ==================== ОКНО ПРИЛОЖЕНИЯ ====================
+function drawAppWindow(eyeSign, halfW, offX) {
+  if (!activeApp) return;
+  
+  const appPos = new Vec3(0, CAM_Y, 1.5);
+  const p = project(appPos, eyeSign, halfW, offX);
+  if (!p.visible) return;
+  
+  const w = 0.9 * p.scale * halfW;
+  const h = 0.6 * p.scale * H;
+  
+  ctx.fillStyle = 'rgba(15, 20, 40, 0.95)';
+  ctx.strokeStyle = '#00d2ff';
+  ctx.lineWidth = 3;
+  ctx.fillRect(p.x - w/2, p.y - h/2, w, h);
+  ctx.strokeRect(p.x - w/2, p.y - h/2, w, h);
+  
+  ctx.fillStyle = '#00d2ff';
+  ctx.font = `bold ${h*0.08}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText(activeApp.label, p.x, p.y - h/2 + h*0.1);
+  
+  ctx.fillStyle = '#ff4444';
+  ctx.beginPath();
+  ctx.arc(p.x + w/2 - h*0.08, p.y - h/2 + h*0.08, h*0.04, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${h*0.05}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText('✕', p.x + w/2 - h*0.08, p.y - h/2 + h*0.1);
+  
+  ctx.textAlign = 'left';
+  const contentX = p.x - w/2 + w*0.05;
+  const contentY = p.y - h/2 + h*0.2;
+  const lineH = h * 0.1;
+  
+  drawAppContent(activeApp.id, contentX, contentY, w*0.9, h*0.7, lineH);
+}
+
+function drawAppContent(appId, x, y, w, h, lineH) {
+  const data = appData[appId];
+  if (!data) {
+    ctx.fillStyle = '#888';
+    ctx.font = `${lineH*0.5}px Arial`;
+    ctx.fillText('Загрузка...', x, y + lineH);
+    return;
+  }
+  
+  ctx.font = `${lineH*0.5}px Arial`;
+  
+  if (appId === 'weather') {
+    const codes = { 0:'☀ Ясно', 1:'🌤 Малооблачно', 2:'⛅ Облачно', 3:'☁ Пасмурно', 
+                    45:'🌫 Туман', 51:'🌦 Морось', 61:'🌧 Дождь', 71:'🌨 Снег', 80:'🌧 Ливень', 95:'⛈ Гроза' };
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${lineH*1.2}px Arial`;
+    ctx.fillText(`${data.temp}°C`, x, y + lineH);
+    ctx.font = `${lineH*0.6}px Arial`;
+    ctx.fillText(codes[data.code] || 'Неизвестно', x, y + lineH*2);
+    ctx.fillText(`💨 Ветер: ${data.wind} м/с`, x, y + lineH*3);
+    if (data.error) {
+      ctx.fillStyle = '#ff8';
+      ctx.fillText('(оффлайн данные)', x, y + lineH*4);
+    }
+  } else if (appId === 'crypto') {
+    data.forEach((c, i) => {
+      const cy = y + i * lineH;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${lineH*0.5}px Arial`;
+      ctx.fillText(`${c.symbol}`, x, cy);
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${lineH*0.45}px Arial`;
+      ctx.fillText(c.name, x + w*0.15, cy);
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'right';
+      ctx.fillText(`$${c.price.toLocaleString()}`, x + w*0.75, cy);
+      ctx.fillStyle = c.change >= 0 ? '#2ecc71' : '#e74c3c';
+      ctx.fillText(`${c.change >= 0 ? '+' : ''}${c.change.toFixed(2)}%`, x + w, cy);
+      ctx.textAlign = 'left';
+    });
+  } else if (appId === 'news') {
+    data.forEach((n, i) => {
+      const ny = y + i * lineH * 1.3;
+      ctx.fillStyle = '#00d2ff';
+      ctx.font = `bold ${lineH*0.45}px Arial`;
+      ctx.fillText(`[${n.source}]`, x, ny);
+      ctx.fillStyle = '#fff';
+      ctx.font = `${lineH*0.4}px Arial`;
+      ctx.fillText(n.title, x + w*0.2, ny);
+      ctx.fillStyle = '#888';
+      ctx.font = `${lineH*0.35}px Arial`;
+      ctx.fillText(n.time + ' назад', x + w*0.2, ny + lineH*0.5);
+    });
+  } else if (appId === 'stocks') {
+    data.forEach((s, i) => {
+      const sy = y + i * lineH;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${lineH*0.5}px Arial`;
+      ctx.fillText(`${s.symbol}`, x, sy);
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${lineH*0.45}px Arial`;
+      ctx.fillText(s.name, x + w*0.15, sy);
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'right';
+      ctx.fillText(`$${s.price}`, x + w*0.75, sy);
+      ctx.fillStyle = s.change >= 0 ? '#2ecc71' : '#e74c3c';
+      ctx.fillText(`${s.change >= 0 ? '+' : ''}${s.change}%`, x + w, sy);
+      ctx.textAlign = 'left';
+    });
+  } else if (appId === 'sports') {
+    data.forEach((m, i) => {
+      const sy = y + i * lineH * 1.3;
+      ctx.fillStyle = m.status === 'LIVE' ? '#e74c3c' : '#888';
+      ctx.font = `bold ${lineH*0.4}px Arial`;
+      ctx.fillText(m.status, x, sy);
+      ctx.fillStyle = '#fff';
+      ctx.font = `${lineH*0.45}px Arial`;
+      ctx.fillText(m.match, x + w*0.15, sy);
+      ctx.fillStyle = '#00d2ff';
+      ctx.font = `bold ${lineH*0.5}px Arial`;
+      ctx.textAlign = 'right';
+      ctx.fillText(m.score, x + w, sy);
+      ctx.fillStyle = '#888';
+      ctx.font = `${lineH*0.35}px Arial`;
+      ctx.fillText(m.league, x + w, sy + lineH*0.5);
+      ctx.textAlign = 'left';
+    });
+  } else if (appId === 'recipes') {
+    data.forEach((r, i) => {
+      const ry = y + i * lineH * 1.2;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${lineH*0.5}px Arial`;
+      ctx.fillText(`🍽 ${r.name}`, x, ry);
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${lineH*0.4}px Arial`;
+      ctx.fillText(`⏱ ${r.time}  ${r.difficulty}`, x + w*0.05, ry + lineH*0.5);
+    });
+  } else if (appId === 'shopping') {
+    data.forEach((s, i) => {
+      const sy = y + i * lineH;
+      ctx.fillStyle = s.done ? '#2ecc71' : '#fff';
+      ctx.font = `${lineH*0.5}px Arial`;
+      ctx.fillText(s.done ? '✓' : '○', x, sy);
+      ctx.fillStyle = s.done ? '#888' : '#fff';
+      ctx.fillText(`${s.item} — ${s.qty}`, x + w*0.08, sy);
+    });
+  } else if (appId === 'budget') {
+    ctx.fillStyle = '#2ecc71';
+    ctx.font = `bold ${lineH*0.6}px Arial`;
+    ctx.fillText(`Доход: ₽${data.income.toLocaleString()}`, x, y);
+    const totalExp = data.expenses.reduce((s,e) => s + e.amount, 0);
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillText(`Расход: ₽${totalExp.toLocaleString()}`, x, y + lineH);
+    ctx.fillStyle = '#00d2ff';
+    ctx.fillText(`Остаток: ₽${(data.income - totalExp).toLocaleString()}`, x, y + lineH*2);
+    data.expenses.forEach((e, i) => {
+      const ey = y + lineH*3 + i * lineH*0.8;
+      ctx.fillStyle = e.color;
+      ctx.fillRect(x, ey - lineH*0.3, w * (e.amount / data.income), lineH*0.4);
+      ctx.fillStyle = '#fff';
+      ctx.font = `${lineH*0.4}px Arial`;
+      ctx.fillText(`${e.cat}: ₽${e.amount.toLocaleString()}`, x, ey + lineH*0.3);
+    });
+  } else if (appId === 'passwords') {
+    data.forEach((p, i) => {
+      const py = y + i * lineH * 1.2;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${lineH*0.5}px Arial`;
+      ctx.fillText(`🔐 ${p.site}`, x, py);
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${lineH*0.4}px Arial`;
+      ctx.fillText(`Логин: ${p.login}`, x + w*0.05, py + lineH*0.5);
+      ctx.font = `${lineH*0.5}px Arial`;
+      ctx.textAlign = 'right';
+      ctx.fillText(p.strength, x + w, py);
+      ctx.textAlign = 'left';
+    });
+  } else if (appId === 'vpn') {
+    ctx.fillStyle = data.status === 'ВКЛ' ? '#2ecc71' : '#e74c3c';
+    ctx.font = `bold ${lineH*0.8}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(data.status, x + w/2, y + lineH);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.font = `${lineH*0.5}px Arial`;
+    ctx.fillText(`🌍 Сервер: ${data.server}`, x, y + lineH*2.5);
+    ctx.fillText(`📡 IP: ${data.ip}`, x, y + lineH*3.5);
+    ctx.fillText(`⚡ Скорость: ${data.speed}`, x, y + lineH*4.5);
+    ctx.fillStyle = '#888';
+    ctx.font = `${lineH*0.4}px Arial`;
+    ctx.fillText('Доступные серверы:', x, y + lineH*6);
+    data.servers.forEach((s, i) => {
+      ctx.fillStyle = '#fff';
+      ctx.fillText(s, x + w*0.05, y + lineH*6.8 + i * lineH*0.6);
+    });
+  }
+}
+
+// ==================== ПОЛ ====================
 function drawFloor(eyeSign, halfW, offX) {
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
@@ -706,62 +1003,105 @@ function drawFloor(eyeSign, halfW, offX) {
 // ==================== ГЛАВНЫЙ ЦИКЛ ====================
 let lastTime = performance.now();
 let prevPinchState = [false, false];
+let dataRefreshTimer = 0;
 
 function loop() {
   const now = performance.now();
   const dt = Math.min((now - lastTime) / 1000, 0.1);
   lastTime = now;
   
+  dataRefreshTimer += dt;
+  if (dataRefreshTimer > 60) {
+    dataRefreshTimer = 0;
+    loadWeather(); loadCrypto();
+  }
+  
   ctx.clearRect(0, 0, W, H);
   
-  smoothHands.forEach((hand, i) => {
-    const pinched = isPinch(hand);
+  // Обработка жестов (на 3D данных)
+  hands3D.forEach((hand, i) => {
+    const pinched = isPinch3D(hand);
+    const justPinched = pinched && !prevPinchState[i];
     
-    if (pinched && !prevPinchState[i]) {
-      if (checkDoubleTap(i, now)) {
-        if (menuVisible) {
-          const tip = hand[8];
-          const vkItem = menuItems.find(it => it.shape === 'vk');
-          if (vkItem && dist3(tip, vkItem.pos) < 0.1) {
-             vkApp.style.display = 'block';
-             vkClose.style.display = 'block';
-             menuVisible = false;
-             ui.textContent = "VK Video";
-          } else {
-             menuVisible = false;
-             ui.textContent = "Меню закрыто";
-          }
-        } else {
-          const palm = hand[9];
-          buildMenu(palm);
-          menuVisible = true;
-          ui.textContent = "Выбери предмет щипком";
+    if (!menuVisible && !activeApp) {
+      const swipe = detectSwipe(i, hand);
+      if (swipe) {
+        if (swipe === 'left' && currentCategory < CATEGORIES.length - 1) {
+          currentCategory++;
+          ui.textContent = CATEGORIES[currentCategory].label;
+        } else if (swipe === 'right' && currentCategory > 0) {
+          currentCategory--;
+          ui.textContent = CATEGORIES[currentCategory].label;
         }
       }
     }
     
-    if (pinched && !prevPinchState[i] && !menuVisible) {
-       const tip = hand[8];
-       let closest = null, minDist = 0.15;
-       objects.forEach(obj => {
-         if(!obj.held) {
-           const d = dist3(tip, obj.pos);
-           if(d < minDist) { closest = obj; minDist = d; }
-         }
-       });
-       
-       if (closest) {
-         closest.held = true;
-         closest.heldByHand = i;
-         closest.holdOffset = closest.pos.sub(tip);
-         ui.textContent = "Держи...";
-       }
+    if (justPinched) {
+      if (checkDoubleTap(i, now)) {
+        if (activeApp) {
+          activeApp = null;
+          ui.textContent = 'Двойной щипок для меню';
+        } else if (menuVisible) {
+          menuVisible = false;
+          ui.textContent = 'Свайп для смены категории';
+        } else {
+          const palm = hand[9];
+          buildMenu(new Vec3(palm.x, palm.y + 0.2, palm.z));
+          ui.textContent = 'Выбери приложение щипком';
+        }
+      } else if (menuVisible) {
+        const tip = hand[8];
+        const items = APPS[CATEGORIES[currentCategory].id];
+        for (const item of items) {
+          if (dist3(tip, item.pos) < 0.08) {
+            if (item.type === 'object') {
+              const newObj = new PhysObject(tip, item.id, item.color);
+              objects.push(newObj);
+              newObj.held = true;
+              newObj.heldByHand = i;
+              newObj.holdOffset = newObj.pos.sub(tip);
+              menuVisible = false;
+              ui.textContent = 'Держи... Отпусти чтобы бросить';
+            } else if (item.type === 'vk') {
+              vkApp.style.display = 'block';
+              vkClose.style.display = 'block';
+              menuVisible = false;
+            } else if (item.type === 'app') {
+              activeApp = item;
+              menuVisible = false;
+              ui.textContent = item.label + ' | Двойной щипок для закрытия';
+            }
+            break;
+          }
+        }
+      } else if (activeApp) {
+        const tip = hand[8];
+        if (tip.y > CAM_Y + 0.2 && tip.x > 0.3 && tip.z < 2) {
+          activeApp = null;
+          ui.textContent = 'Двойной щипок для меню';
+        }
+      } else {
+        const tip = hand[8];
+        let closest = null, minDist = 0.15;
+        for (const obj of objects) {
+          if (!obj.held) {
+            const d = dist3(tip, obj.pos);
+            if (d < minDist) { closest = obj; minDist = d; }
+          }
+        }
+        if (closest) {
+          closest.held = true;
+          closest.heldByHand = i;
+          closest.holdOffset = closest.pos.sub(tip);
+          ui.textContent = 'Держи...';
+        }
+      }
     }
     
     if (!pinched && prevPinchState[i]) {
-      objects.forEach(obj => {
-        if(obj.held && obj.heldByHand === i) obj.release();
-      });
+      for (const obj of objects) {
+        if (obj.held && obj.heldByHand === i) obj.release();
+      }
     }
     
     prevPinchState[i] = pinched;
@@ -770,10 +1110,12 @@ function loop() {
       floorY = Math.min(floorY, hand[0].y - 0.1);
     }
   });
-
-  objects.forEach(obj => obj.update(dt, now));
+  
+  // Физика
+  for (const obj of objects) obj.update(dt, now);
   objects = objects.filter(o => o.pos.y > -10);
   
+  // ===== Стерео рендер =====
   const halfW = W / 2;
   for (let eye = 0; eye < 2; eye++) {
     const eyeSign = eye === 0 ? -1 : 1;
@@ -784,29 +1126,22 @@ function loop() {
     
     drawFloor(eyeSign, halfW, offX);
     
-    if (menuVisible) {
-      menuItems.forEach(item => {
-        const fakeObj = { pos: item.pos, shape: item.shape, color: item.color, size: 0.06, held: false, rotation: 0 };
-        drawObject(fakeObj, eyeSign, halfW, offX);
-        
-        const p = project(item.pos, eyeSign, halfW, offX);
-        if(p.visible) {
-           ctx.fillStyle = '#fff'; ctx.font = '16px Arial'; ctx.textAlign = 'center';
-           ctx.fillText(item.label, p.x, p.y + 35 * p.scale * halfW);
-        }
-      });
-    }
-    
     objects.sort((a,b) => b.pos.z - a.pos.z).forEach(obj => drawObject(obj, eyeSign, halfW, offX));
     
-    drawHands(eyeSign, halfW, offX);
+    drawMenu(eyeSign, halfW, offX);
+    drawAppWindow(eyeSign, halfW, offX);
     
     ctx.restore();
   }
   
+  // ===== 2D СКЕЛЕТ РУК поверх всего (на весь экран) =====
+  // Это ключевое: скелет рисуется в реальных экранных координатах
+  drawHands2D();
+  
   requestAnimationFrame(loop);
 }
 
+// ==================== КНОПКИ ====================
 vkClose.addEventListener('click', () => {
   vkApp.style.display = 'none';
   vkClose.style.display = 'none';
@@ -814,22 +1149,31 @@ vkClose.addEventListener('click', () => {
 });
 
 startBtn.addEventListener('click', async () => {
+  // Проверка ориентации
   if (window.innerWidth <= window.innerHeight) {
     errorMsg.style.display = 'block';
-    errorMsg.textContent = 'Поверни телефон горизонтально!';
+    errorMsg.textContent = '⚠️ Поверни телефон горизонтально!';
     return;
   }
   
+  startBtn.disabled = true;
+  startBtn.textContent = '⏳ ЗАПУСК...';
+  
+  // Запрос камеры
   const ok = await requestCamera();
   if (!ok) return;
+  
   startScreen.style.display = 'none';
   loading.style.display = 'flex';
+  
   try {
     await initHandTracking();
+    await loadAllData();
     loading.style.display = 'none';
+    ui.style.display = 'block';
     loop();
   } catch (e) {
-    alert('Ошибка запуска: ' + e);
+    loadingText.textContent = 'Ошибка: ' + e.message;
   }
 });
 </script>
