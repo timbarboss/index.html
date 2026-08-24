@@ -3,248 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Hand Master AR</title>
+<title>VR Hand Physics</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-  body {
-    background: #000;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    color: #fff;
-    touch-action: none;
+  body { background: #000; overflow: hidden; font-family: Arial; color: #fff; touch-action: none; }
+  #video {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    object-fit: cover; z-index: 0;
   }
-  #video, #canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
+  #canvas {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2;
   }
-  #canvas { z-index: 2; }
+  #divider {
+    position: fixed; top: 0; left: 50%; width: 3px; height: 100vh;
+    background: #000; z-index: 3; pointer-events: none;
+  }
   #ui {
-    position: fixed;
-    top: 10px; left: 10px;
-    z-index: 3;
-    background: rgba(0,0,0,0.5);
-    padding: 10px 15px;
-    border-radius: 10px;
-    font-size: 16px;
-    pointer-events: none;
-    display: none;
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 4; background: rgba(0,0,0,0.7); padding: 8px 16px;
+    border-radius: 20px; font-size: 14px; pointer-events: none;
+    text-align: center; max-width: 90%;
   }
-  
-  /* ===== СТАРТОВЫЙ ЭКРАН ===== */
   #startScreen {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 20px;
-    text-align: center;
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    z-index: 20; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; padding: 20px; text-align: center;
   }
   #startScreen h1 {
-    font-size: 36px;
-    margin-bottom: 10px;
+    font-size: 32px; margin-bottom: 15px;
     background: linear-gradient(90deg, #0ff, #f0f);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-  #startScreen .subtitle {
-    font-size: 16px;
-    color: #aaa;
-    margin-bottom: 30px;
-    max-width: 400px;
+  #startScreen .subtitle { font-size: 15px; color: #aaa; margin-bottom: 20px; max-width: 400px; line-height: 1.5; }
+  .instructions {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    padding: 15px; border-radius: 12px; margin-bottom: 20px;
+    max-width: 400px; text-align: left; font-size: 14px; line-height: 1.8;
   }
-  .features {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .feature {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 15px;
-    border-radius: 12px;
-    width: 120px;
-    font-size: 14px;
-  }
-  .feature .icon { font-size: 32px; margin-bottom: 8px; }
-  
+  .instructions b { color: #0ff; }
   #startBtn {
-    background: linear-gradient(135deg, #0ff, #00a8ff);
-    color: #000;
-    border: none;
-    padding: 18px 40px;
-    font-size: 20px;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 0 30px rgba(0,255,255,0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: linear-gradient(135deg, #0ff, #00a8ff); color: #000;
+    border: none; padding: 18px 40px; font-size: 18px; font-weight: bold;
+    border-radius: 50px; cursor: pointer; box-shadow: 0 0 30px rgba(0,255,255,0.4);
     margin-bottom: 15px;
   }
-  #startBtn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 50px rgba(0,255,255,0.6);
-  }
-  #startBtn:active { transform: scale(0.98); }
-  #startBtn:disabled {
-    background: #555;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-  
-  #permissionNote {
-    font-size: 13px;
-    color: #888;
-    max-width: 350px;
-    line-height: 1.5;
-  }
-  #permissionNote b { color: #0ff; }
-  
-  #errorMsg {
-    color: #ff6b6b;
-    margin-top: 15px;
-    font-size: 14px;
-    max-width: 400px;
-    display: none;
-  }
-  
-  /* ===== ЭКРАН ЗАГРУЗКИ ===== */
+  #startBtn:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+  #errorMsg { color: #ff6b6b; font-size: 14px; max-width: 400px; display: none; }
   #loading {
-    position: fixed;
-    inset: 0;
-    background: #111;
-    z-index: 15;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    font-size: 18px;
+    position: fixed; inset: 0; background: #111; z-index: 15;
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; font-size: 18px;
   }
   .spinner {
-    width: 50px; height: 50px;
-    border: 4px solid #333;
-    border-top-color: #0ff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+    width: 50px; height: 50px; border: 4px solid #333;
+    border-top-color: #0ff; border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 20px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  
-  /* ===== МОДАЛКА ПОВТОРА ===== */
-  #retryModal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 25;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 20px;
-    text-align: center;
-  }
-  #retryModal h2 {
-    font-size: 28px;
-    color: #ff6b6b;
-    margin-bottom: 15px;
-  }
-  #retryModal p {
-    font-size: 15px;
-    color: #ccc;
-    max-width: 400px;
-    margin-bottom: 25px;
-    line-height: 1.6;
-  }
-  #retryBtn {
-    background: #ff6b6b;
-    color: #fff;
-    border: none;
-    padding: 15px 35px;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-  }
 </style>
 </head>
 <body>
 
-<!-- ===== СТАРТОВЫЙ ЭКРАН ===== -->
 <div id="startScreen">
-  <h1>🖐️ HAND MASTER AR</h1>
-  <p class="subtitle">Управляй игрой руками через камеру телефона или ПК</p>
-  
-  <div class="features">
-    <div class="feature"><div class="icon">🍎</div>Ловец фруктов</div>
-    <div class="feature"><div class="icon">🎹</div>Пианино</div>
-    <div class="feature"><div class="icon">🎨</div>Кисть</div>
+  <h1>🥽 VR HAND PHYSICS</h1>
+  <p class="subtitle">Положи телефон в VR-шлем задней камерой наружу</p>
+  <div class="instructions">
+    <b>🖐 Открытая ладонь (0.6с)</b> — вызвать меню объектов<br>
+    <b>✊ Кулак</b> — спрятать меню<br>
+    <b>🤏 Щипок</b> — взять / отпустить предмет<br>
+    <b>👇 Две ладони вниз</b> — откалибровать уровень пола<br>
+    <b>🎯 Бросок</b> — отпусти предмет в движении
   </div>
-  
   <button id="startBtn">📷 РАЗРЕШИТЬ КАМЕРУ И НАЧАТЬ</button>
-  
-  <p id="permissionNote">
-    При нажатии браузер <b>запросит разрешение</b> на использование камеры.<br>
-    Нажми <b>"Разрешить"</b> во всплывающем окне.
-  </p>
-  
   <div id="errorMsg"></div>
 </div>
 
-<!-- ===== ЭКРАН ЗАГРУЗКИ МОДЕЛИ ===== -->
 <div id="loading">
   <div class="spinner"></div>
-  <div id="loadingText">Загрузка модели трекинга рук...</div>
+  <div id="loadingText">Загрузка модели трекинга...</div>
 </div>
 
-<!-- ===== МОДАЛКА ПРИ ОТКАЗЕ ===== -->
-<div id="retryModal">
-  <h2>⚠️ Камера недоступна</h2>
-  <p id="retryText">
-    Ты отклонил доступ к камере. Чтобы играть, нужно разрешить доступ.<br><br>
-    <b>Как включить:</b><br>
-    • Chrome: адресная строка → значок замка → Камера → Разрешить<br>
-    • Safari: Настройки → Safari → Камера
-  </p>
-  <button id="retryBtn">🔄 ПОПРОБОВАТЬ СНОВА</button>
-</div>
-
-<!-- ===== ИГРОВОЙ ИНТЕРФЕЙС ===== -->
 <video id="video" autoplay playsinline muted></video>
 <canvas id="canvas"></canvas>
-<div id="ui">
-  <div id="score">Очки: 0</div>
-  <div id="info">Сожми большой и указательный палец для клика</div>
-</div>
+<div id="divider"></div>
+<div id="ui">Открой ладонь для меню</div>
 
-<!-- MediaPipe Hands -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 <script>
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const infoEl = document.getElementById('info');
 const ui = document.getElementById('ui');
 const startScreen = document.getElementById('startScreen');
 const startBtn = document.getElementById('startBtn');
 const loading = document.getElementById('loading');
 const loadingText = document.getElementById('loadingText');
 const errorMsg = document.getElementById('errorMsg');
-const retryModal = document.getElementById('retryModal');
-const retryBtn = document.getElementById('retryBtn');
-const retryText = document.getElementById('retryText');
 
 let W = 0, H = 0;
 function resize() {
@@ -254,93 +111,67 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// ==================== СОСТОЯНИЕ ИГРЫ ====================
-let gameState = 'menu';
-let score = 0;
-let hands = [];
-let prevPinch = [false, false];
-
-const menuButtons = [
-  { id: 'catcher', title: '🍎 ЛОВЕЦ ФРУКТОВ', x: 0, y: 0, w: 0, h: 0, color: '#ff6b6b' },
-  { id: 'piano',   title: '🎹 ПИАНИНО',        x: 0, y: 0, w: 0, h: 0, color: '#4ecdc4' },
-  { id: 'painter', title: '🎨 КИСТЬ',          x: 0, y: 0, w: 0, h: 0, color: '#ffe66d' },
-];
-
-let fallingObjects = [];
-let lastSpawn = 0;
-
-const pianoKeys = [];
-const pianoNotes = [261, 293, 329, 349, 392, 440, 493, 523];
-let audioCtx = null;
-
-let paintTrail = [];
-let currentColor = '#ff00ff';
-const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00'];
-
-// ==================== АУДИО ====================
-function playTone(freq, duration = 0.3) {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
+// ==================== 3D МАТЕМАТИКА ====================
+class Vec3 {
+  constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z;}
+  add(v){return new Vec3(this.x+v.x,this.y+v.y,this.z+v.z);}
+  sub(v){return new Vec3(this.x-v.x,this.y-v.y,this.z-v.z);}
+  mul(s){return new Vec3(this.x*s,this.y*s,this.z*s);}
+  len(){return Math.hypot(this.x,this.y,this.z);}
+  clone(){return new Vec3(this.x,this.y,this.z);}
+  lerp(v,t){return new Vec3(this.x+(v.x-this.x)*t,this.y+(v.y-this.y)*t,this.z+(v.z-this.z)*t);}
 }
 
-// ==================== ЗАПРОС РАЗРЕШЕНИЯ КАМЕРЫ ====================
-async function requestCameraPermission() {
+// VR параметры
+const CAM_Y = 1.6;           // высота глаз
+const EYE_OFFSET = 0.032;    // межзрачковое расстояние ~6.4см
+const FOV_FACTOR = 1.0;      // тангенс полу-FOV
+
+// Проекция 3D точки в 2D для конкретного глаза
+function project(p, eyeSign, halfW, offX) {
+  const camX = eyeSign * EYE_OFFSET;
+  const dx = p.x - camX;
+  const dy = p.y - CAM_Y;
+  const dz = p.z;
+  if (dz < 0.1) return { visible: false };
+  const scale = 1 / (dz * FOV_FACTOR);
+  const sx = offX + halfW/2 + dx * scale * halfW;
+  const sy = H/2 - dy * scale * H;
+  return { x: sx, y: sy, scale, visible: true, depth: dz };
+}
+
+// ==================== КАМЕРА (ЗАДНЯЯ) ====================
+async function requestCamera() {
   startBtn.disabled = true;
-  startBtn.textContent = '⏳ ЗАПРОС РАЗРЕШЕНИЯ...';
+  startBtn.textContent = '⏳ ЗАПРОС...';
   errorMsg.style.display = 'none';
   
-  // Сначала проверяем, есть ли API
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showError('Твой браузер не поддерживает доступ к камере. Попробуй Chrome или Safari.');
-    return false;
+    showError('Браузер не поддерживает камеру'); return false;
   }
-  
-  // Проверяем, в безопасном ли контексте (HTTPS или localhost)
   if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    showError('Камера работает только по HTTPS. Загрузи файл на GitHub Pages или открой через localhost.');
-    return false;
+    showError('Нужен HTTPS. Загрузи на GitHub Pages.'); return false;
   }
   
   try {
-    // ЯВНЫЙ ЗАПРОС РАЗРЕШЕНИЯ — здесь браузер покажет системное окно
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { 
-        facingMode: 'user', 
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      },
+      video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false
     });
-    
-    // Разрешение получено! Подключаем поток к видео
     video.srcObject = stream;
     await video.play();
     return true;
-    
-  } catch (err) {
-    console.error('Ошибка камеры:', err);
-    
-    // Разные типы ошибок
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      // Пользователь нажал "Запретить"
-      showRetryModal('Ты запретил доступ к камере. Нажми кнопку ниже, чтобы попробовать снова, или разреши доступ в настройках браузера.');
-    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-      showError('Камера не найдена на устройстве.');
-    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-      showError('Камера уже используется другим приложением. Закрой другие приложения с камерой.');
-    } else if (err.name === 'OverconstrainedError') {
-      showError('Камера не поддерживает запрошенные параметры.');
-    } else {
-      showError('Ошибка доступа к камере: ' + err.message);
+  } catch (e) {
+    if (e.name === 'OverconstrainedError') {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+        video.srcObject = stream;
+        await video.play();
+        return true;
+      } catch (e2) { showError('Задняя камера недоступна: ' + e2.message); return false; }
     }
+    if (e.name === 'NotAllowedError') showError('Разрешение отклонено. Разреши камеру в настройках.');
+    else showError('Ошибка камеры: ' + e.message);
     return false;
   }
 }
@@ -352,102 +183,311 @@ function showError(msg) {
   startBtn.textContent = '📷 РАЗРЕШИТЬ КАМЕРУ И НАЧАТЬ';
 }
 
-function showRetryModal(msg) {
-  retryText.innerHTML = msg;
-  retryModal.style.display = 'flex';
+// ==================== MEDIAPIPE + СГЛАЖИВАНИЕ ====================
+let handsTracker = null;
+let rawHands = [];       // сырые данные от MediaPipe
+let smoothHands = [];    // сглаженные 3D-координаты
+let prevSmoothHands = []; // предыдущие для lerp
+const SMOOTH_FACTOR = 0.45; // 0 = застывшие, 1 = без сглаживания. 0.45 — оптимально
+
+// Преобразование landmarks MediaPipe в 3D-мир
+function landmarksToWorld(landmarks) {
+  const wrist = landmarks[0];
+  // Оценка глубины по размеру руки в кадре
+  const handSizePx = Math.hypot(landmarks[0].x - landmarks[12].x, landmarks[0].y - landmarks[12].y);
+  const estimatedDistance = 0.18 / Math.max(handSizePx, 0.01);
+  const depth = Math.min(Math.max(estimatedDistance, 0.3), 1.5);
+  
+  return landmarks.map(p => {
+    const x = (p.x - 0.5) * depth * 1.5;
+    const y = CAM_Y - (p.y - 0.5) * depth * 1.5;
+    const z = depth - p.z * 0.5;
+    return new Vec3(x, y, z);
+  });
 }
 
-// ==================== КНОПКА СТАРТ ====================
-startBtn.addEventListener('click', async () => {
-  const ok = await requestCameraPermission();
-  if (!ok) return;
-  
-  // Камера работает, запускаем загрузку модели
-  startScreen.style.display = 'none';
-  loading.style.display = 'flex';
-  
-  try {
-    await initHandTracking();
-    loading.style.display = 'none';
-    ui.style.display = 'block';
-    startGameLoop();
-  } catch (e) {
-    loadingText.textContent = 'Ошибка загрузки модели: ' + e.message;
-  }
-});
-
-// ==================== КНОПКА ПОВТОРА ====================
-retryBtn.addEventListener('click', () => {
-  retryModal.style.display = 'none';
-  startBtn.disabled = false;
-  startBtn.textContent = '📷 РАЗРЕШИТЬ КАМЕРУ И НАЧАТЬ';
-});
-
-// ==================== MEDIAPIPE ====================
-let handsTracker = null;
+// Экспоненциальное сглаживание — скелет плавно следует за рукой
+function smoothHand(raw, prev) {
+  if (!prev || prev.length !== raw.length) return raw.map(p => p.clone());
+  return raw.map((p, i) => prev[i].lerp(p, SMOOTH_FACTOR));
+}
 
 async function initHandTracking() {
   handsTracker = new Hands({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
   });
-
   handsTracker.setOptions({
     maxNumHands: 2,
-    modelComplexity: 0,
-    minDetectionConfidence: 0.6,
-    minTrackingConfidence: 0.5
+    modelComplexity: 1,        // 1 = точнее, но чуть медленнее
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.6
   });
-
   handsTracker.onResults(onResults);
 
   const camera = new Camera(video, {
-    onFrame: async () => {
-      if (handsTracker) await handsTracker.send({ image: video });
-    },
-    width: 640,
-    height: 480
+    onFrame: async () => { if (handsTracker) await handsTracker.send({ image: video }); },
+    width: 640, height: 480
   });
   camera.start();
 }
 
 function onResults(results) {
-  hands = [];
+  rawHands = [];
   if (results.multiHandLandmarks) {
-    for (const landmarks of results.multiHandLandmarks) {
-      const hand = landmarks.map(p => ({
-        x: (1 - p.x) * W,
-        y: p.y * H,
-        z: p.z
-      }));
-      hands.push(hand);
+    for (const lm of results.multiHandLandmarks) {
+      rawHands.push(landmarksToWorld(lm));
     }
+  }
+  // Сглаживание
+  smoothHands = rawHands.map((raw, i) => smoothHand(raw, prevSmoothHands[i]));
+  prevSmoothHands = smoothHands.map(h => h.map(p => p.clone()));
+}
+
+// ==================== ЖЕСТЫ ====================
+function dist3(a, b) { return a.sub(b).len(); }
+
+// Открытая ладонь: 4 пальца разогнуты
+function isOpenPalm(hand) {
+  const wrist = hand[0];
+  const tips = [8, 12, 16, 20];
+  const pips = [6, 10, 14, 18];
+  let ext = 0;
+  for (let i = 0; i < 4; i++) {
+    if (dist3(wrist, hand[tips[i]]) > dist3(wrist, hand[pips[i]]) * 1.1) ext++;
+  }
+  return ext >= 3;
+}
+
+// Кулак: 4 пальца согнуты
+function isFist(hand) {
+  const wrist = hand[0];
+  const tips = [8, 12, 16, 20];
+  const pips = [6, 10, 14, 18];
+  let cur = 0;
+  for (let i = 0; i < 4; i++) {
+    if (dist3(wrist, hand[tips[i]]) < dist3(wrist, hand[pips[i]]) * 1.05) cur++;
+  }
+  return cur >= 3;
+}
+
+// Щипок: большой + указательный близко
+function isPinch(hand) {
+  const d = dist3(hand[4], hand[8]);
+  const size = dist3(hand[0], hand[12]);
+  return d < size * 0.35;
+}
+
+// ==================== ФИЗИКА / МИР ====================
+let floorY = 0.0;
+let objects = [];
+
+class PhysObject {
+  constructor(pos, shape, color, size=0.08) {
+    this.pos = pos.clone();
+    this.vel = new Vec3(0,0,0);
+    this.shape = shape;
+    this.color = color;
+    this.size = size;
+    this.held = false;
+    this.heldByHand = -1;
+    this.holdOffset = new Vec3();
+    this.prevHandPos = null;
+    this.prevTime = 0;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotVel = (Math.random() - 0.5) * 2;
+    this.velocityHistory = []; // для точного броска
+  }
+  
+  update(dt, now) {
+    if (this.held) {
+      const hand = smoothHands[this.heldByHand];
+      if (hand && isPinch(hand)) {
+        const target = hand[8].add(this.holdOffset);
+        // Запоминаем историю позиций для расчёта скорости броска
+        this.velocityHistory.push({ pos: target.clone(), time: now });
+        if (this.velocityHistory.length > 5) this.velocityHistory.shift();
+        this.pos = target;
+      } else {
+        this.release();
+      }
+    } else {
+      // Гравитация
+      this.vel.y -= 9.8 * dt;
+      this.pos = this.pos.add(this.vel.mul(dt));
+      
+      // Пол
+      if (this.pos.y < floorY + this.size) {
+        this.pos.y = floorY + this.size;
+        if (Math.abs(this.vel.y) > 0.5) this.vel.y *= -0.4;
+        else this.vel.y = 0;
+        this.vel.x *= 0.85;
+        this.vel.z *= 0.85;
+        this.rotVel *= 0.9;
+      }
+      
+      // Границы
+      if (Math.abs(this.pos.x) > 2) { this.pos.x = Math.sign(this.pos.x)*2; this.vel.x *= -0.5; }
+      if (this.pos.z < 0.2) { this.pos.z = 0.2; this.vel.z *= -0.5; }
+      if (this.pos.z > 3) { this.pos.z = 3; this.vel.z *= -0.5; }
+    }
+    this.rotation += this.rotVel * dt;
+  }
+  
+  release() {
+    // Вычисляем скорость броска из истории
+    if (this.velocityHistory.length >= 2) {
+      const last = this.velocityHistory[this.velocityHistory.length - 1];
+      const first = this.velocityHistory[0];
+      const dt = (last.time - first.time) / 1000;
+      if (dt > 0.01) {
+        this.vel = last.pos.sub(first.pos).mul(1/dt).mul(0.7);
+        // Ограничиваем макс. скорость
+        const maxV = 8;
+        if (this.vel.len() > maxV) this.vel = this.vel.mul(maxV / this.vel.len());
+      }
+    }
+    this.rotVel = (Math.random() - 0.5) * 5 + this.vel.x * 2;
+    this.held = false;
+    this.heldByHand = -1;
+    this.velocityHistory = [];
   }
 }
 
-// ==================== ГЕСТИ ====================
-function distance(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
+// ==================== МЕНЮ ПО ЖЕСТУ ====================
+let menuVisible = false;
+let menuItems = [];
+let palmHoldTime = [0, 0];
+let fistHoldTime = [0, 0];
+const MENU_HOLD_TIME = 0.6;
+
+function buildMenu(centerPos) {
+  menuItems = [];
+  const shapes = [
+    { shape: 'cube',     color: '#ff6b6b', label: 'КУБ' },
+    { shape: 'sphere',   color: '#4ecdc4', label: 'ШАР' },
+    { shape: 'cylinder', color: '#ffe66d', label: 'ЦИЛИНДР' },
+    { shape: 'pyramid',  color: '#a78bfa', label: 'ПИРАМИДА' },
+  ];
+  const radius = 0.18;
+  shapes.forEach((s, i) => {
+    const angle = (i / shapes.length) * Math.PI * 2 - Math.PI/2;
+    const pos = new Vec3(
+      centerPos.x + Math.cos(angle) * radius,
+      centerPos.y + 0.1 + Math.sin(angle) * radius * 0.5,
+      centerPos.z
+    );
+    menuItems.push({ ...s, pos, id: i });
+  });
 }
 
-function getPinch(hand) {
-  const thumb = hand[4];
-  const index = hand[8];
-  const dist = distance(thumb, index);
-  const handSize = distance(hand[0], hand[12]);
-  return dist < handSize * 0.35;
+// ==================== КАЛИБРОВКА ПОЛА ====================
+let calibrationSamples = [];
+
+function calibrateFloor() {
+  let minY = Infinity;
+  for (const hand of smoothHands) {
+    for (const p of hand) if (p.y < minY) minY = p.y;
+  }
+  if (minY < Infinity) {
+    calibrationSamples.push(minY);
+    if (calibrationSamples.length > 15) calibrationSamples.shift();
+    const avg = calibrationSamples.reduce((a,b)=>a+b,0) / calibrationSamples.length;
+    floorY = avg - 0.1;
+  }
 }
 
-function getFingerTip(hand) { return hand[8]; }
-
-function getPalmCenter(hand) {
-  return {
-    x: (hand[0].x + hand[9].x) / 2,
-    y: (hand[0].y + hand[9].y) / 2
-  };
+// ==================== ОТРИСОВКА 3D ОБЪЕКТОВ ====================
+function drawObject(obj, eyeSign, halfW, offX) {
+  const p = project(obj.pos, eyeSign, halfW, offX);
+  if (!p.visible) return;
+  const size = obj.size * p.scale * halfW * 1.5;
+  if (size < 2) return;
+  
+  // Тень на полу
+  const shadowProj = project(new Vec3(obj.pos.x, floorY, obj.pos.z), eyeSign, halfW, offX);
+  if (shadowProj.visible) {
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(shadowProj.x, shadowProj.y, size*0.8, size*0.25, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(obj.rotation);
+  ctx.fillStyle = obj.color;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  
+  if (obj.shape === 'cube') {
+    ctx.fillRect(-size, -size, size*2, size*2);
+    ctx.strokeRect(-size, -size, size*2, size*2);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(size, -size); ctx.lineTo(size*1.3, -size*1.3);
+    ctx.lineTo(size*1.3, size*0.7); ctx.lineTo(size, size);
+    ctx.closePath(); ctx.fill();
+  } else if (obj.shape === 'sphere') {
+    const grad = ctx.createRadialGradient(-size*0.3, -size*0.3, 0, 0, 0, size);
+    grad.addColorStop(0, '#fff');
+    grad.addColorStop(0.3, obj.color);
+    grad.addColorStop(1, '#000');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  } else if (obj.shape === 'cylinder') {
+    ctx.fillRect(-size*0.7, -size, size*1.4, size*2);
+    ctx.strokeRect(-size*0.7, -size, size*1.4, size*2);
+    ctx.beginPath();
+    ctx.ellipse(0, -size, size*0.7, size*0.3, 0, 0, Math.PI*2);
+    ctx.fillStyle = obj.color; ctx.fill(); ctx.stroke();
+  } else if (obj.shape === 'pyramid') {
+    ctx.beginPath();
+    ctx.moveTo(0, -size*1.2); ctx.lineTo(-size, size); ctx.lineTo(size, size);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  
+  if (obj.held) {
+    ctx.strokeStyle = '#0ff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, size * 1.5, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
 }
 
-// ==================== ОТРИСОВКА ====================
-function drawHand(hand, color) {
+// ==================== ОТРИСОВКА МЕНЮ ====================
+function drawMenuItems(eyeSign, halfW, offX) {
+  if (!menuVisible) return;
+  for (const item of menuItems) {
+    const p = project(item.pos, eyeSign, halfW, offX);
+    if (!p.visible) continue;
+    const size = 0.06 * p.scale * halfW * 1.5;
+    
+    let hovered = false;
+    for (const hand of smoothHands) {
+      if (dist3(hand[8], item.pos) < 0.07) hovered = true;
+    }
+    
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.fillStyle = hovered ? item.color : 'rgba(30,30,50,0.9)';
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = hovered ? 4 : 2;
+    ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    
+    ctx.fillStyle = hovered ? '#000' : item.color;
+    ctx.font = `bold ${size}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const icon = { cube: '▣', sphere: '●', cylinder: '▮', pyramid: '▲' }[item.shape];
+    ctx.fillText(icon, 0, 0);
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${size*0.4}px Arial`;
+    ctx.fillText(item.label, 0, size * 1.4);
+    ctx.restore();
+  }
+}
+
+// ==================== ОТРИСОВКА РУК (ПЛВНЫЙ СКЕЛЕТ) ====================
+function drawHands(eyeSign, halfW, offX) {
   const connections = [
     [0,1],[1,2],[2,3],[3,4],
     [0,5],[5,6],[6,7],[7,8],
@@ -455,258 +495,171 @@ function drawHand(hand, color) {
     [9,13],[13,14],[14,15],[15,16],
     [13,17],[17,18],[18,19],[19,20],[0,17]
   ];
+  const colors = ['#0ff', '#f0f'];
   
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  for (const [a, b] of connections) {
-    ctx.beginPath();
-    ctx.moveTo(hand[a].x, hand[a].y);
-    ctx.lineTo(hand[b].x, hand[b].y);
-    ctx.stroke();
-  }
-  
-  for (const p of hand) {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  
-  const tip = getFingerTip(hand);
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(tip.x, tip.y, 15, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
-function drawMenu() {
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 32px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('HAND MASTER AR', W/2, 60);
-  ctx.font = '18px Arial';
-  ctx.fillText('Наведи палец и сожми щипок для выбора', W/2, 90);
-  
-  const btnW = Math.min(W * 0.7, 400);
-  const btnH = 80;
-  const startY = H * 0.3;
-  const gap = 30;
-  
-  menuButtons.forEach((btn, i) => {
-    btn.x = W/2 - btnW/2;
-    btn.y = startY + i * (btnH + gap);
-    btn.w = btnW;
-    btn.h = btnH;
+  smoothHands.forEach((hand, hi) => {
+    const color = colors[hi % 2];
     
-    let hovered = false;
-    for (const hand of hands) {
-      const tip = getFingerTip(hand);
-      if (tip.x > btn.x && tip.x < btn.x + btn.w &&
-          tip.y > btn.y && tip.y < btn.y + btn.h) {
-        hovered = true;
+    // Соединения (плавные линии)
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const [a, b] of connections) {
+      const pa = project(hand[a], eyeSign, halfW, offX);
+      const pb = project(hand[b], eyeSign, halfW, offX);
+      if (pa.visible && pb.visible) {
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.stroke();
       }
     }
     
-    ctx.fillStyle = hovered ? btn.color : 'rgba(50,50,50,0.8)';
-    ctx.strokeStyle = btn.color;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 15);
-    ctx.fill();
-    ctx.stroke();
+    // Суставы
+    for (let i = 0; i < hand.length; i++) {
+      const pp = project(hand[i], eyeSign, halfW, offX);
+      if (pp.visible) {
+        const isTip = [4,8,12,16,20].includes(i);
+        ctx.fillStyle = isTip ? '#fff' : color;
+        ctx.beginPath();
+        ctx.arc(pp.x, pp.y, isTip ? 5 : 3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
     
-    ctx.fillStyle = hovered ? '#000' : '#fff';
-    ctx.font = 'bold 24px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(btn.title, btn.x + btn.w/2, btn.y + btn.h/2);
+    // Курсор на указательном
+    const tip = project(hand[8], eyeSign, halfW, offX);
+    if (tip.visible) {
+      const pinched = isPinch(hand);
+      ctx.strokeStyle = pinched ? '#ff0' : '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, pinched ? 14 : 10, 0, Math.PI*2);
+      ctx.stroke();
+      if (pinched) {
+        ctx.fillStyle = 'rgba(255,255,0,0.3)';
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 14, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
   });
 }
 
-function drawBackButton() {
-  const btn = { x: 20, y: 20, w: 100, h: 50 };
-  ctx.fillStyle = 'rgba(255,50,50,0.8)';
-  ctx.beginPath();
-  ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 10);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 18px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('← МЕНЮ', btn.x + btn.w/2, btn.y + btn.h/2);
-  return btn;
+// ==================== ОТРИСОВКА ПОЛА ====================
+function drawFloor(eyeSign, halfW, offX) {
+  // Сетка пола для ориентира
+  ctx.strokeStyle = 'rgba(0,255,255,0.2)';
+  ctx.lineWidth = 1;
+  const gridSize = 0.5;
+  for (let x = -2; x <= 2; x += gridSize) {
+    const p1 = project(new Vec3(x, floorY, 0.3), eyeSign, halfW, offX);
+    const p2 = project(new Vec3(x, floorY, 3), eyeSign, halfW, offX);
+    if (p1.visible && p2.visible) {
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+  }
+  for (let z = 0.5; z <= 3; z += gridSize) {
+    const p1 = project(new Vec3(-2, floorY, z), eyeSign, halfW, offX);
+    const p2 = project(new Vec3(2, floorY, z), eyeSign, halfW, offX);
+    if (p1.visible && p2.visible) {
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+  }
 }
 
-// ==================== ИГРА: ЛОВЕЦ ====================
-function updateCatcher(dt) {
-  lastSpawn += dt;
-  if (lastSpawn > 800) {
-    lastSpawn = 0;
-    fallingObjects.push({
-      x: Math.random() * (W - 60) + 30,
-      y: -30,
-      vy: 3 + Math.random() * 3,
-      r: 25,
-      emoji: ['🍎','🍌','🍊','🍇','🍓'][Math.floor(Math.random()*5)]
-    });
-  }
-  
-  for (let i = fallingObjects.length - 1; i >= 0; i--) {
-    const obj = fallingObjects[i];
-    obj.y += obj.vy;
-    
-    let caught = false;
-    for (const hand of hands) {
-      const palm = getPalmCenter(hand);
-      if (distance(palm, obj) < 60) {
-        caught = true;
-        score += 10;
-        scoreEl.textContent = 'Очки: ' + score;
-        playTone(600 + Math.random() * 400, 0.1);
-        break;
+// ==================== ОБРАБОТКА ЖЕСТОВ ====================
+let prevPinch = [false, false];
+
+function handleGestures(dt) {
+  // Меню по открытой ладони
+  let anyPalm = false;
+  for (let i = 0; i < smoothHands.length; i++) {
+    if (isOpenPalm(smoothHands[i])) {
+      anyPalm = true;
+      palmHoldTime[i] += dt;
+      if (palmHoldTime[i] > MENU_HOLD_TIME && !menuVisible) {
+        const palm = smoothHands[i][9]; // центр ладони
+        buildMenu(new Vec3(palm.x, palm.y + 0.2, palm.z));
+        menuVisible = true;
+        ui.textContent = 'Меню открыто. Наведи палец и сожми щипок';
       }
+    } else {
+      palmHoldTime[i] = 0;
     }
     
-    if (caught || obj.y > H + 50) {
-      fallingObjects.splice(i, 1);
-    }
-  }
-}
-
-function drawCatcher() {
-  ctx.font = '40px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  for (const obj of fallingObjects) {
-    ctx.fillText(obj.emoji, obj.x, obj.y);
-  }
-  
-  for (const hand of hands) {
-    const palm = getPalmCenter(hand);
-    ctx.strokeStyle = 'rgba(0,255,255,0.6)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(palm.x, palm.y, 60, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-}
-
-// ==================== ИГРА: ПИАНИНО ====================
-function initPiano() {
-  pianoKeys.length = 0;
-  const keyW = W / pianoNotes.length;
-  const keyH = H * 0.4;
-  const y = H - keyH;
-  for (let i = 0; i < pianoNotes.length; i++) {
-    pianoKeys.push({
-      x: i * keyW, y, w: keyW, h: keyH,
-      freq: pianoNotes[i],
-      active: false
-    });
-  }
-}
-
-function updatePiano() {
-  for (const key of pianoKeys) key.active = false;
-  
-  for (const hand of hands) {
-    const tips = [8, 12, 16, 20];
-    for (const idx of tips) {
-      const tip = hand[idx];
-      for (const key of pianoKeys) {
-        if (tip.x > key.x && tip.x < key.x + key.w &&
-            tip.y > key.y && tip.y < key.y + key.h) {
-          if (!key.active) {
-            key.active = true;
-            playTone(key.freq, 0.2);
-          }
-        }
+    if (isFist(smoothHands[i])) {
+      fistHoldTime[i] += dt;
+      if (fistHoldTime[i] > MENU_HOLD_TIME && menuVisible) {
+        menuVisible = false;
+        ui.textContent = 'Открой ладонь для меню';
       }
+    } else {
+      fistHoldTime[i] = 0;
     }
   }
-}
-
-function drawPiano() {
-  for (const key of pianoKeys) {
-    ctx.fillStyle = key.active ? '#0ff' : '#fff';
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.fillRect(key.x, key.y, key.w, key.h);
-    ctx.strokeRect(key.x, key.y, key.w, key.h);
-  }
-}
-
-// ==================== ИГРА: КИСТЬ ====================
-function updatePainter() {
-  for (let i = 0; i < hands.length; i++) {
-    const hand = hands[i];
-    const tip = getFingerTip(hand);
-    
-    if (getPinch(hand) && !prevPinch[i]) {
-      currentColor = colors[Math.floor(Math.random() * colors.length)];
-    }
-    
-    paintTrail.push({
-      x: tip.x, y: tip.y,
-      color: currentColor,
-      life: 1
-    });
+  
+  // Калибровка пола: обе руки опущены вниз
+  if (smoothHands.length === 2) {
+    const bothDown = smoothHands.every(h => h[0].y < CAM_Y - 0.5);
+    if (bothDown) calibrateFloor();
   }
   
-  for (let i = paintTrail.length - 1; i >= 0; i--) {
-    paintTrail[i].life -= 0.005;
-    if (paintTrail[i].life <= 0) paintTrail.splice(i, 1);
-  }
-  
-  if (paintTrail.length > 1000) paintTrail.splice(0, paintTrail.length - 1000);
-}
-
-function drawPainter() {
-  for (const p of paintTrail) {
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-// ==================== ОБРАБОТКА КЛИКОВ ====================
-function handlePinch() {
-  for (let i = 0; i < hands.length; i++) {
-    const hand = hands[i];
-    const pinched = getPinch(hand);
+  // Щипок — взять/отпустить предмет
+  for (let i = 0; i < smoothHands.length; i++) {
+    const pinched = isPinch(smoothHands[i]);
     const justPinched = pinched && !prevPinch[i];
+    const justReleased = !pinched && prevPinch[i];
+    const tip = smoothHands[i][8];
     
     if (justPinched) {
-      const tip = getFingerTip(hand);
-      
-      if (gameState === 'menu') {
-        for (const btn of menuButtons) {
-          if (tip.x > btn.x && tip.x < btn.x + btn.w &&
-              tip.y > btn.y && tip.y < btn.y + btn.h) {
-            gameState = btn.id;
-            score = 0;
-            scoreEl.textContent = 'Очки: 0';
-            if (btn.id === 'piano') initPiano();
-            if (btn.id === 'painter') paintTrail = [];
-            if (btn.id === 'catcher') { fallingObjects = []; lastSpawn = 0; }
-            infoEl.textContent = btn.title;
-            playTone(800, 0.15);
+      // Сначала проверяем меню
+      if (menuVisible) {
+        for (const item of menuItems) {
+          if (dist3(tip, item.pos) < 0.07) {
+            // Создаём объект перед игроком
+            const spawnPos = new Vec3(tip.x, tip.y, tip.z);
+            const newObj = new PhysObject(spawnPos, item.shape, item.color);
+            objects.push(newObj);
+            // Сразу берём в руку
+            newObj.held = true;
+            newObj.heldByHand = i;
+            newObj.holdOffset = newObj.pos.sub(tip);
+            menuVisible = false;
+            ui.textContent = 'Предмет взят! Отпусти щипок чтобы бросить';
+            break;
           }
         }
-      } else {
-        const back = { x: 20, y: 20, w: 100, h: 50 };
-        if (tip.x > back.x && tip.x < back.x + back.w &&
-            tip.y > back.y && tip.y < back.y + back.h) {
-          gameState = 'menu';
-          infoEl.textContent = 'Сожми большой и указательный палец для клика';
-          playTone(400, 0.15);
+      }
+      
+      // Если не взяли из меню — берём ближайший предмет
+      if (!objects.some(o => o.held && o.heldByHand === i)) {
+        let closest = null, closestDist = 0.12;
+        for (const obj of objects) {
+          if (obj.held) continue;
+          const d = dist3(tip, obj.pos);
+          if (d < closestDist) { closest = obj; closestDist = d; }
+        }
+        if (closest) {
+          closest.held = true;
+          closest.heldByHand = i;
+          closest.holdOffset = closest.pos.sub(tip);
+          closest.velocityHistory = [];
+          ui.textContent = 'Предмет взят! Отпусти щипок чтобы бросить';
         }
       }
     }
+    
+    if (justReleased) {
+      for (const obj of objects) {
+        if (obj.held && obj.heldByHand === i) {
+          obj.release();
+          ui.textContent = menuVisible ? 'Меню открыто' : 'Открой ладонь для меню';
+        }
+      }
+    }
+    
     prevPinch[i] = pinched;
   }
 }
@@ -724,49 +677,59 @@ function startGameLoop() {
 
 function loop() {
   const now = performance.now();
-  const dt = now - lastTime;
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   
-  ctx.save();
   ctx.clearRect(0, 0, W, H);
   
-  handlePinch();
+  handleGestures(dt);
   
-  if (gameState === 'menu') {
-    drawMenu();
-  } else if (gameState === 'catcher') {
-    updateCatcher(dt);
-    drawCatcher();
-  } else if (gameState === 'piano') {
-    updatePiano();
-    drawPiano();
-  } else if (gameState === 'painter') {
-    updatePainter();
-    drawPainter();
+  // Обновляем физику
+  for (const obj of objects) obj.update(dt, now);
+  // Удаляем улетевшие
+  objects = objects.filter(o => o.pos.y > -5 && o.pos.y < 10);
+  
+  // Рендер для каждого глаза
+  const halfW = W / 2;
+  for (let eye = 0; eye < 2; eye++) {
+    const eyeSign = eye === 0 ? -1 : 1; // -1 лево, +1 право
+    const offX = eye * halfW;
+    
+    // Обрезающая рамка для глаза
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(offX, 0, halfW, H);
+    ctx.clip();
+    
+    drawFloor(eyeSign, halfW, offX);
+    
+    // Сортируем объекты по глубине (дальние сначала)
+    const sorted = [...objects].sort((a,b) => b.pos.z - a.pos.z);
+    for (const obj of sorted) drawObject(obj, eyeSign, halfW, offX);
+    
+    drawMenuItems(eyeSign, halfW, offX);
+    drawHands(eyeSign, halfW, offX);
+    
+    ctx.restore();
   }
   
-  const colors = ['#0ff', '#f0f'];
-  hands.forEach((hand, i) => drawHand(hand, colors[i % 2]));
-  
-  if (gameState !== 'menu') drawBackButton();
-  
-  ctx.restore();
   requestAnimationFrame(loop);
 }
 
-// roundRect polyfill
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-    this.beginPath();
-    this.moveTo(x + r, y);
-    this.arcTo(x + w, y, x + w, y + h, r);
-    this.arcTo(x + w, y + h, x, y + h, r);
-    this.arcTo(x, y + h, x, y, r);
-    this.arcTo(x, y, x + w, y, r);
-    this.closePath();
-    return this;
-  };
-}
+// ==================== СТАРТ ====================
+startBtn.addEventListener('click', async () => {
+  const ok = await requestCamera();
+  if (!ok) return;
+  startScreen.style.display = 'none';
+  loading.style.display = 'flex';
+  try {
+    await initHandTracking();
+    loading.style.display = 'none';
+    startGameLoop();
+  } catch (e) {
+    loadingText.textContent = 'Ошибка: ' + e.message;
+  }
+});
 </script>
 </body>
 </html>
