@@ -3,99 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>VR Hand Physics - Precise Tracking</title>
+<title>VR Hand Physics - HD Tracking</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-  body { background: #000; overflow: hidden; font-family: Arial; color: #fff; touch-action: none; }
   
-  /* Видео с камеры (фон) */
+  /* ФИКСАЦИЯ ГОРИЗОНТАЛЬНОЙ ОРИЕНТАЦИИ */
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    touch-action: none;
+  }
+  
+  /* Предупреждение о вертикальной ориентации */
+  #rotateWarning {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+  #rotateWarning .icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: rotate 2s ease-in-out infinite;
+  }
+  @keyframes rotate {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
+  #rotateWarning h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  #rotateWarning p {
+    font-size: 16px;
+    color: #aaa;
+  }
+  
+  /* Видео с камеры */
   #video {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    object-fit: cover; z-index: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: 0;
   }
   
-  /* Канвас для рисования скелета и объектов */
+  /* Канвас для графики */
   #canvas {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2;
   }
   
-  /* Разделитель для VR (черная полоса посередине) */
+  /* VR разделитель */
   #divider {
-    position: fixed; top: 0; left: 50%; width: 4px; height: 100vh;
-    background: #000; z-index: 3; pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    width: 4px;
+    height: 100vh;
+    background: #000;
+    z-index: 3;
+    pointer-events: none;
   }
   
-  /* Интерфейс подсказок */
+  /* UI подсказки */
   #ui {
-    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-    z-index: 4; background: rgba(0,0,0,0.7); padding: 8px 16px;
-    border-radius: 20px; font-size: 14px; pointer-events: none;
-    text-align: center; max-width: 90%; border: 1px solid rgba(255,255,255,0.2);
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    background: rgba(0,0,0,0.8);
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 16px;
+    pointer-events: none;
+    text-align: center;
+    border: 2px solid rgba(0,210,255,0.5);
+    box-shadow: 0 0 20px rgba(0,210,255,0.3);
   }
-
-  /* Приложение ВК Видео (поверх всего) */
+  
+  /* ВК Видео */
   #vkApp {
-    position: fixed; inset: 0; z-index: 10; display: none; background: #000;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    background: #000;
   }
-  #vkFrame { width: 100%; height: 100%; border: none; }
+  #vkFrame {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
   #vkClose {
-    position: fixed; top: 20px; right: 20px; z-index: 11;
-    background: #ff4444; color: #fff; border: 2px solid #fff;
-    width: 50px; height: 50px; border-radius: 50%;
-    font-size: 24px; cursor: pointer; display: none;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 11;
+    background: #ff4444;
+    color: #fff;
+    border: 3px solid #fff;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    cursor: pointer;
+    display: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.7);
   }
-
+  
   /* Стартовый экран */
   #startScreen {
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    z-index: 20; display: flex; align-items: center; justify-content: center;
-    flex-direction: column; padding: 20px; text-align: center;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
   }
   #startScreen h1 {
-    font-size: 32px; margin-bottom: 15px;
+    font-size: 36px;
+    margin-bottom: 15px;
     background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   .instructions {
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-    padding: 20px; border-radius: 15px; margin-bottom: 25px;
-    max-width: 400px; text-align: left; font-size: 15px; line-height: 1.6;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    max-width: 500px;
+    text-align: left;
+    font-size: 16px;
+    line-height: 1.8;
   }
-  .instructions b { color: #00d2ff; }
+  .instructions b {
+    color: #00d2ff;
+  }
   #startBtn {
-    background: linear-gradient(90deg, #00d2ff, #3a7bd5); color: #fff;
-    border: none; padding: 18px 40px; font-size: 18px; font-weight: bold;
-    border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,210,255,0.4);
+    background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+    color: #fff;
+    border: none;
+    padding: 20px 50px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(0,210,255,0.5);
+    transition: transform 0.2s;
   }
-  #startBtn:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
-  #errorMsg { color: #ff6b6b; margin-top: 15px; font-size: 14px; display: none; }
+  #startBtn:hover {
+    transform: scale(1.05);
+  }
+  #startBtn:disabled {
+    background: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  #errorMsg {
+    color: #ff6b6b;
+    margin-top: 15px;
+    font-size: 14px;
+    display: none;
+  }
   
   /* Загрузка */
   #loading {
-    position: fixed; inset: 0; background: #000; z-index: 15;
-    display: none; align-items: center; justify-content: center;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 15;
+    display: none;
+    align-items: center;
+    justify-content: center;
     flex-direction: column;
   }
   .spinner {
-    width: 50px; height: 50px; border: 4px solid #333;
-    border-top-color: #00d2ff; border-radius: 50%;
-    animation: spin 1s linear infinite; margin-bottom: 20px;
+    width: 60px;
+    height: 60px;
+    border: 5px solid #333;
+    border-top-color: #00d2ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 </style>
 </head>
 <body>
 
+<!-- Предупреждение о вертикальной ориентации -->
+<div id="rotateWarning">
+  <div class="icon">📱</div>
+  <h2>Поверни телефон горизонтально</h2>
+  <p>Игра работает только в ландшафтном режиме</p>
+</div>
+
 <div id="startScreen">
-  <h1>🥽 VR HAND PHYSICS</h1>
+  <h1>🥽 VR HAND PHYSICS HD</h1>
   <div class="instructions">
-    📱 <b>Камера:</b> Задняя (смотри через шлем)<br><br>
-    👆👆 <b>Двойной щипок:</b> Открыть меню<br>
+    📱 <b>Ориентация:</b> Только горизонтальная (landscape)<br><br>
+    👆👆 <b>Двойной щипок:</b> Открыть/закрыть меню<br>
     🤏 <b>Одинарный щипок:</b> Взять предмет<br>
     📺 <b>Иконка VK:</b> Смотреть видео<br>
-    👇 <b>Руки вниз:</b> Калибровка пола
+    👇 <b>Руки вниз:</b> Калибровка пола<br><br>
+    <b>✨ HD Трекинг:</b> One Euro Filter для плавности
   </div>
   <button id="startBtn">ЗАПУСТИТЬ VR</button>
   <div id="errorMsg"></div>
@@ -103,7 +240,7 @@
 
 <div id="loading">
   <div class="spinner"></div>
-  <div style="color:#aaa">Загрузка нейросети...</div>
+  <div style="color:#aaa; font-size:18px">Загрузка нейросети...</div>
 </div>
 
 <video id="video" autoplay playsinline muted></video>
@@ -112,12 +249,10 @@
 <div id="ui">Двойной щипок для меню</div>
 
 <div id="vkApp">
-  <!-- Используем мобильную версию VK для лучшей совместимости -->
   <iframe id="vkFrame" src="https://m.vk.com/video" allowfullscreen></iframe>
 </div>
 <button id="vkClose">✕</button>
 
-<!-- Подключаем MediaPipe -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
@@ -133,16 +268,27 @@ const errorMsg = document.getElementById('errorMsg');
 const vkApp = document.getElementById('vkApp');
 const vkFrame = document.getElementById('vkFrame');
 const vkClose = document.getElementById('vkClose');
+const rotateWarning = document.getElementById('rotateWarning');
 
 let W = 0, H = 0;
+
+// ==================== ПРОВЕРКА ОРИЕНТАЦИИ ====================
+function checkOrientation() {
+  const isLandscape = window.innerWidth > window.innerHeight;
+  rotateWarning.style.display = isLandscape ? 'none' : 'flex';
+}
+
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
+  checkOrientation();
 }
+
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 100));
 resize();
 
-// ==================== 3D МАТЕМАТИКА И КАМЕРА ====================
+// ==================== 3D МАТЕМАТИКА ====================
 class Vec3 {
   constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z;}
   add(v){return new Vec3(this.x+v.x,this.y+v.y,this.z+v.z);}
@@ -151,21 +297,64 @@ class Vec3 {
   len(){return Math.hypot(this.x,this.y,this.z);}
   clone(){return new Vec3(this.x,this.y,this.z);}
   lerp(v,t){return new Vec3(this.x+(v.x-this.x)*t,this.y+(v.y-this.y)*t,this.z+(v.z-this.z)*t);}
+  distTo(v){return this.sub(v).len();}
 }
 
-// Параметры VR
-const CAM_Y = 1.6;           // Высота глаз
-const EYE_OFFSET = 0.032;    // Межзрачковое расстояние
-const FOV_SCALE = 1.2;       // Масштаб поля зрения (чем больше, тем "шире" угол)
+// ==================== ONE EURO FILTER ====================
+// Продвинутый фильтр для плавного трекинга
+class OneEuroFilter {
+  constructor(freq=30, mincutoff=1, beta=0.007, dcutoff=1) {
+    this.freq = freq;
+    this.mincutoff = mincutoff;
+    this.beta = beta;
+    this.dcutoff = dcutoff;
+    this.x = null;
+    this.dx = 0;
+    this.lastTime = null;
+  }
+  
+  alpha(cutoff) {
+    const te = 1.0 / this.freq;
+    const tau = 1.0 / (2 * Math.PI * cutoff);
+    return 1.0 / (1.0 + tau / te);
+  }
+  
+  filter(x, timestamp=null) {
+    if (this.x === null) {
+      this.x = x;
+      this.dx = 0;
+      this.lastTime = timestamp;
+      return x;
+    }
+    
+    const prevTime = this.lastTime || timestamp;
+    const te = timestamp ? (timestamp - prevTime) : (1.0 / this.freq);
+    this.freq = 1.0 / te;
+    
+    const dx = (x - this.x) / te;
+    const edx = this.alpha(this.dcutoff);
+    this.dx = edx * dx + (1 - edx) * this.dx;
+    
+    const cutoff = this.mincutoff + this.beta * Math.abs(this.dx);
+    const ax = this.alpha(cutoff);
+    this.x = ax * x + (1 - ax) * this.x;
+    
+    this.lastTime = timestamp;
+    return this.x;
+  }
+}
 
-// Проекция 3D точки на 2D экран конкретного глаза
+// ==================== VR ПАРАМЕТРЫ ====================
+const CAM_Y = 1.6;
+const EYE_OFFSET = 0.032;
+const FOV_SCALE = 1.2;
+
 function project(p, eyeSign, halfW, offX) {
   const camX = eyeSign * EYE_OFFSET;
   const dx = p.x - camX;
   const dy = p.y - CAM_Y;
   const dz = p.z;
   
-  // Если точка за спиной или слишком близко
   if (dz < 0.1) return { visible: false };
   
   const scale = 1 / (dz * FOV_SCALE);
@@ -175,18 +364,17 @@ function project(p, eyeSign, halfW, offX) {
   return { x: sx, y: sy, scale, visible: true, depth: dz };
 }
 
-// ==================== КАМЕРА ТЕЛЕФОНА ====================
+// ==================== КАМЕРА ====================
 async function requestCamera() {
   startBtn.disabled = true;
   startBtn.textContent = '⏳ ПОДКЛЮЧЕНИЕ...';
   
   try {
-    // Пытаемся включить ЗАДНЮЮ камеру
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { 
-        facingMode: 'environment', // environment = задняя камера
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
       },
       audio: false
     });
@@ -201,50 +389,62 @@ async function requestCamera() {
   }
 }
 
-// ==================== MEDIAPIPE ТРЕКИНГ ====================
+// ==================== MEDIAPIPE + ONE EURO FILTER ====================
 let handsTracker = null;
-let smoothHands = []; // Сглаженные данные рук
-let prevSmoothHands = []; 
+let smoothHands = [];
+let filters = []; // One Euro Filter для каждой точки каждой руки
 
-// Преобразование сырых данных (0..1) в реальные 3D координаты (метры)
-function landmarksToWorld(landmarks) {
-  // 1. Вычисляем глубину руки по её размеру в кадре
-  // Расстояние между запястьем (0) и средним пальцем (9) в пикселях экрана
+// Инициализация фильтров
+function initFilters(numHands) {
+  filters = [];
+  for (let h = 0; h < numHands; h++) {
+    const handFilters = [];
+    for (let i = 0; i < 21; i++) {
+      handFilters.push({
+        x: new OneEuroFilter(30, 1.0, 0.007),
+        y: new OneEuroFilter(30, 1.0, 0.007),
+        z: new OneEuroFilter(30, 1.0, 0.007)
+      });
+    }
+    filters.push(handFilters);
+  }
+}
+
+function landmarksToWorld(landmarks, handIndex, timestamp) {
   const wrist = landmarks[0];
   const middleBase = landmarks[9];
   const pixelSize = Math.hypot(wrist.x - middleBase.x, wrist.y - middleBase.y);
   
-  // Реальный размер ладони ~0.18 метра. Чем меньше pixelSize, тем дальше рука.
-  // Формула: Depth = RealSize / PixelSize * Constant
-  let depth = 0.18 / (pixelSize + 0.001); 
+  let depth = 0.18 / (pixelSize + 0.001);
+  depth = Math.min(Math.max(depth, 0.3), 2.0);
   
-  // Ограничиваем диапазон, чтобы рука не улетала в бесконечность
-  depth = Math.min(Math.max(depth, 0.3), 2.0); 
-
-  // 2. Преобразуем X и Y в метры относительно центра тела
-  // aspectRatio нужен, чтобы круглые движения оставались круглыми
   const aspect = video.videoWidth / video.videoHeight;
   
-  return landmarks.map(p => {
-    // X: (p.x - 0.5) центрирует координаты. Умножаем на глубину, чтобы сохранить перспективу.
-    // Инвертируем X, так как задняя камера часто дает зеркальное отражение для VR
-    const x = -(p.x - 0.5) * depth * aspect * 1.5; 
+  // Инициализируем фильтры если нужно
+  if (!filters[handIndex]) {
+    const handFilters = [];
+    for (let i = 0; i < 21; i++) {
+      handFilters.push({
+        x: new OneEuroFilter(30, 1.0, 0.007),
+        y: new OneEuroFilter(30, 1.0, 0.007),
+        z: new OneEuroFilter(30, 1.0, 0.007)
+      });
+    }
+    filters[handIndex] = handFilters;
+  }
+  
+  return landmarks.map((p, i) => {
+    const rawX = -(p.x - 0.5) * depth * aspect * 1.5;
+    const rawY = CAM_Y - (p.y - 0.5) * depth * 1.5;
+    const rawZ = depth - p.z * 0.2;
     
-    // Y: Высота. CAM_Y - это уровень глаз.
-    const y = CAM_Y - (p.y - 0.5) * depth * 1.5;
+    // Применяем One Euro Filter
+    const filteredX = filters[handIndex][i].x.filter(rawX, timestamp);
+    const filteredY = filters[handIndex][i].y.filter(rawY, timestamp);
+    const filteredZ = filters[handIndex][i].z.filter(rawZ, timestamp);
     
-    // Z: Глубина. Мы уже вычислили базовую глубину, корректируем по Z от MediaPipe
-    const z = depth - p.z * 0.2; 
-    
-    return new Vec3(x, y, z);
+    return new Vec3(filteredX, filteredY, filteredZ);
   });
-}
-
-// Функция сглаживания (чтобы скелет не дрожал, но следовал точно)
-function smoothHand(raw, prev) {
-  if (!prev || prev.length !== raw.length) return raw.map(p => p.clone());
-  // Lerp 0.5 означает 50% новой позиции, 50% старой. Быстро и плавно.
-  return raw.map((p, i) => prev[i].lerp(p, 0.5));
 }
 
 async function initHandTracking() {
@@ -254,9 +454,9 @@ async function initHandTracking() {
   
   handsTracker.setOptions({
     maxNumHands: 2,
-    modelComplexity: 1, // 1 = лучше точность
-    minDetectionConfidence: 0.6,
-    minTrackingConfidence: 0.6
+    modelComplexity: 1, // 1 = высокая точность
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7
   });
 
   handsTracker.onResults(onResults);
@@ -265,47 +465,47 @@ async function initHandTracking() {
     onFrame: async () => { 
       if (handsTracker) await handsTracker.send({ image: video }); 
     },
-    width: 640, height: 480
+    width: 1280,
+    height: 720
   });
   camera.start();
 }
 
 function onResults(results) {
+  const timestamp = performance.now();
   let rawHands = [];
+  
   if (results.multiHandLandmarks) {
-    for (const lm of results.multiHandLandmarks) {
-      rawHands.push(landmarksToWorld(lm));
+    for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+      const lm = results.multiHandLandmarks[i];
+      rawHands.push(landmarksToWorld(lm, i, timestamp));
     }
   }
   
-  // Применяем сглаживание
-  smoothHands = rawHands.map((raw, i) => smoothHand(raw, prevSmoothHands[i]));
-  prevSmoothHands = smoothHands.map(h => h.map(p => p.clone()));
+  smoothHands = rawHands;
 }
 
-// ==================== ЖЕСТЫ И ЛОГИКА ====================
+// ==================== ЖЕСТЫ ====================
 function dist3(a, b) { return a.sub(b).len(); }
 
-// Проверка щипка (расстояние между большим и указательным)
 function isPinch(hand) {
   const d = dist3(hand[4], hand[8]);
-  const size = dist3(hand[0], hand[9]); // Размер ладони для масштаба
-  return d < size * 0.4; // Порог срабатывания
+  const size = dist3(hand[0], hand[9]);
+  return d < size * 0.4;
 }
 
-// Детектор двойного тапа
 let lastTapTime = [0, 0];
 function checkDoubleTap(handIndex, now) {
   const timeSinceLast = now - lastTapTime[handIndex];
   if (timeSinceLast < 400 && timeSinceLast > 50) {
-    lastTapTime[handIndex] = 0; // Сброс
+    lastTapTime[handIndex] = 0;
     return true;
   }
   lastTapTime[handIndex] = now;
   return false;
 }
 
-// ==================== МИР И ФИЗИКА ====================
+// ==================== МИР ====================
 let floorY = 0.0;
 let objects = [];
 let menuVisible = false;
@@ -321,7 +521,7 @@ class PhysObject {
     this.held = false;
     this.heldByHand = -1;
     this.holdOffset = new Vec3();
-    this.history = []; // Для броска
+    this.history = [];
     this.rotation = Math.random() * 6;
   }
   
@@ -329,30 +529,24 @@ class PhysObject {
     if (this.held) {
       const hand = smoothHands[this.heldByHand];
       if (hand && isPinch(hand)) {
-        // Жесткая привязка к руке
         const target = hand[8].add(this.holdOffset);
         this.pos = target;
-        
-        // Записываем историю для расчета скорости броска
         this.history.push({ pos: target.clone(), time: now });
         if (this.history.length > 4) this.history.shift();
       } else {
         this.release();
       }
     } else {
-      // Гравитация
       this.vel.y -= 15 * dt;
       this.pos = this.pos.add(this.vel.mul(dt));
       
-      // Пол
       if (this.pos.y < floorY + this.size) {
         this.pos.y = floorY + this.size;
-        this.vel.y *= -0.5; // Отскок
-        this.vel.x *= 0.9;  // Трение
+        this.vel.y *= -0.5;
+        this.vel.x *= 0.9;
         this.vel.z *= 0.9;
       }
       
-      // Стены (невидимые)
       if (Math.abs(this.pos.x) > 2.5) { this.pos.x = Math.sign(this.pos.x)*2.5; this.vel.x *= -0.5; }
       if (this.pos.z < 0.2) { this.pos.z = 0.2; this.vel.z *= -0.5; }
       if (this.pos.z > 4) { this.pos.z = 4; this.vel.z *= -0.5; }
@@ -361,7 +555,6 @@ class PhysObject {
   }
   
   release() {
-    // Расчет скорости броска
     if (this.history.length >= 2) {
       const last = this.history[this.history.length-1];
       const first = this.history[0];
@@ -376,7 +569,6 @@ class PhysObject {
   }
 }
 
-// Создание меню
 function buildMenu(centerPos) {
   menuItems = [];
   const items = [
@@ -384,12 +576,11 @@ function buildMenu(centerPos) {
     { shape: 'sphere', color: '#2ed573', label: 'ШАР' },
     { shape: 'cylinder', color: '#ffa502', label: 'ЦИЛИНДР' },
     { shape: 'pyramid', color: '#a4b0be', label: 'ПИРАМИДА' },
-    { shape: 'vk', color: '#0077FF', label: 'VK VIDEO' } // Иконка ВК
+    { shape: 'vk', color: '#0077FF', label: 'VK VIDEO' }
   ];
   
   items.forEach((item, i) => {
-    // Расставляем предметы полукругом перед игроком
-    const angle = -Math.PI/2 + (i / (items.length-1)) * Math.PI; // от -90 до +90 градусов
+    const angle = -Math.PI/2 + (i / (items.length-1)) * Math.PI;
     const radius = 0.4;
     const pos = new Vec3(
       centerPos.x + Math.cos(angle) * radius,
@@ -407,7 +598,6 @@ function drawObject(obj, eyeSign, halfW, offX) {
   const size = obj.size * p.scale * halfW * 1.5;
   if (size < 1) return;
 
-  // Тень
   const sProj = project(new Vec3(obj.pos.x, floorY, obj.pos.z), eyeSign, halfW, offX);
   if (sProj.visible) {
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -426,7 +616,6 @@ function drawObject(obj, eyeSign, halfW, offX) {
   if (obj.shape === 'cube') {
     ctx.fillRect(-size, -size, size*2, size*2);
     ctx.strokeRect(-size, -size, size*2, size*2);
-    // 3D эффект
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath();
     ctx.moveTo(size, -size); ctx.lineTo(size*1.2, -size*1.2);
@@ -444,7 +633,6 @@ function drawObject(obj, eyeSign, halfW, offX) {
   } else if (obj.shape === 'pyramid') {
     ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(-size, size); ctx.lineTo(size, size); ctx.fill(); ctx.stroke();
   } else if (obj.shape === 'vk') {
-    // Логотип VK (упрощенный)
     ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#fff';
     ctx.font = `bold ${size}px Arial`;
@@ -467,12 +655,12 @@ function drawHands(eyeSign, halfW, offX) {
   ];
   
   smoothHands.forEach((hand, hi) => {
-    const color = hi === 0 ? '#00d2ff' : '#ff00ea'; // Левая - голубая, Правая - розовая
+    const color = hi === 0 ? '#00d2ff' : '#ff00ea';
     
-    // Рисуем кости
     ctx.strokeStyle = color;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     
     for (const [a, b] of connections) {
       const pa = project(hand[a], eyeSign, halfW, offX);
@@ -482,16 +670,14 @@ function drawHands(eyeSign, halfW, offX) {
       }
     }
     
-    // Рисуем суставы
     for (let i = 0; i < hand.length; i++) {
       const pp = project(hand[i], eyeSign, halfW, offX);
       if (pp.visible) {
         ctx.fillStyle = [4,8,12,16,20].includes(i) ? '#fff' : color;
-        ctx.beginPath(); ctx.arc(pp.x, pp.y, [4,8,12,16,20].includes(i) ? 6 : 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(pp.x, pp.y, [4,8,12,16,20].includes(i) ? 7 : 4, 0, Math.PI*2); ctx.fill();
       }
     }
     
-    // Курсор щипка
     const tip = project(hand[8], eyeSign, halfW, offX);
     if (tip.visible) {
       const pinched = isPinch(hand);
@@ -505,7 +691,6 @@ function drawHands(eyeSign, halfW, offX) {
 function drawFloor(eyeSign, halfW, offX) {
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
-  // Сетка
   for(let x=-2; x<=2; x+=0.5) {
     const p1 = project(new Vec3(x, floorY, 0.5), eyeSign, halfW, offX);
     const p2 = project(new Vec3(x, floorY, 3.0), eyeSign, halfW, offX);
@@ -529,14 +714,11 @@ function loop() {
   
   ctx.clearRect(0, 0, W, H);
   
-  // 1. Логика жестов
   smoothHands.forEach((hand, i) => {
     const pinched = isPinch(hand);
     
-    // Двойной тап (открытие меню)
     if (pinched && !prevPinchState[i]) {
       if (checkDoubleTap(i, now)) {
-        // Проверяем, не нажали ли мы на иконку VK в открытом меню
         if (menuVisible) {
           const tip = hand[8];
           const vkItem = menuItems.find(it => it.shape === 'vk');
@@ -546,11 +728,10 @@ function loop() {
              menuVisible = false;
              ui.textContent = "VK Video";
           } else {
-             menuVisible = false; // Просто закрыть меню
+             menuVisible = false;
              ui.textContent = "Меню закрыто";
           }
         } else {
-          // Открыть меню
           const palm = hand[9];
           buildMenu(palm);
           menuVisible = true;
@@ -559,29 +740,24 @@ function loop() {
       }
     }
     
-    // Взятие предметов (одинарный щипок)
-    if (pinched && !prevPinchState[i]) {
-       if (!menuVisible) {
-         const tip = hand[8];
-         // Ищем ближайший предмет
-         let closest = null, minDist = 0.15;
-         objects.forEach(obj => {
-           if(!obj.held) {
-             const d = dist3(tip, obj.pos);
-             if(d < minDist) { closest = obj; minDist = d; }
-           }
-         });
-         
-         if (closest) {
-           closest.held = true;
-           closest.heldByHand = i;
-           closest.holdOffset = closest.pos.sub(tip);
-           ui.textContent = "Держи...";
+    if (pinched && !prevPinchState[i] && !menuVisible) {
+       const tip = hand[8];
+       let closest = null, minDist = 0.15;
+       objects.forEach(obj => {
+         if(!obj.held) {
+           const d = dist3(tip, obj.pos);
+           if(d < minDist) { closest = obj; minDist = d; }
          }
+       });
+       
+       if (closest) {
+         closest.held = true;
+         closest.heldByHand = i;
+         closest.holdOffset = closest.pos.sub(tip);
+         ui.textContent = "Держи...";
        }
     }
     
-    // Отпускание
     if (!pinched && prevPinchState[i]) {
       objects.forEach(obj => {
         if(obj.held && obj.heldByHand === i) obj.release();
@@ -590,17 +766,14 @@ function loop() {
     
     prevPinchState[i] = pinched;
     
-    // Калибровка пола (если руки опущены вниз)
     if (hand[0].y < CAM_Y - 0.6) {
       floorY = Math.min(floorY, hand[0].y - 0.1);
     }
   });
 
-  // 2. Физика
   objects.forEach(obj => obj.update(dt, now));
-  objects = objects.filter(o => o.pos.y > -10); // Удаляем упавшие
+  objects = objects.filter(o => o.pos.y > -10);
   
-  // 3. Отрисовка (Стерео)
   const halfW = W / 2;
   for (let eye = 0; eye < 2; eye++) {
     const eyeSign = eye === 0 ? -1 : 1;
@@ -611,26 +784,21 @@ function loop() {
     
     drawFloor(eyeSign, halfW, offX);
     
-    // Меню
     if (menuVisible) {
       menuItems.forEach(item => {
-        // Рисуем как объект
         const fakeObj = { pos: item.pos, shape: item.shape, color: item.color, size: 0.06, held: false, rotation: 0 };
         drawObject(fakeObj, eyeSign, halfW, offX);
         
-        // Подпись
         const p = project(item.pos, eyeSign, halfW, offX);
         if(p.visible) {
-           ctx.fillStyle = '#fff'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
-           ctx.fillText(item.label, p.x, p.y + 30 * p.scale * halfW);
+           ctx.fillStyle = '#fff'; ctx.font = '16px Arial'; ctx.textAlign = 'center';
+           ctx.fillText(item.label, p.x, p.y + 35 * p.scale * halfW);
         }
       });
     }
     
-    // Предметы
     objects.sort((a,b) => b.pos.z - a.pos.z).forEach(obj => drawObject(obj, eyeSign, halfW, offX));
     
-    // Руки (поверх всего)
     drawHands(eyeSign, halfW, offX);
     
     ctx.restore();
@@ -639,15 +807,19 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// Кнопка закрытия ВК
 vkClose.addEventListener('click', () => {
   vkApp.style.display = 'none';
   vkClose.style.display = 'none';
-  vkFrame.src = ''; // Остановить видео
+  vkFrame.src = '';
 });
 
-// Старт
 startBtn.addEventListener('click', async () => {
+  if (window.innerWidth <= window.innerHeight) {
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = 'Поверни телефон горизонтально!';
+    return;
+  }
+  
   const ok = await requestCamera();
   if (!ok) return;
   startScreen.style.display = 'none';
