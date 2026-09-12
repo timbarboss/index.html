@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>✨ Соня ✨ Лилии • Котики • Выдры • Мемы • AI</title>
+<title>✨ Соня ✨ Лилии • Котики • Выдры • Русские Мемы</title>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.5s, color 0.3s; }
@@ -301,25 +301,58 @@
 
   .meme-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
     margin: 20px 0;
-    max-height: 600px;
+    max-height: 700px;
     overflow-y: auto;
-    padding: 10px;
+    padding: 15px;
   }
   .meme-item {
     background: white;
-    border-radius: 15px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: all 0.3s;
     cursor: pointer;
+    border: 3px solid #ffb6c1;
   }
-  body.night .meme-item { background: rgba(255,255,255,0.1); }
-  .meme-item:hover { transform: translateY(-5px) scale(1.02); }
-  .meme-item img { width: 100%; height: 250px; object-fit: cover; }
-  .meme-title { padding: 10px; font-size: 0.9em; text-align: center; }
+  body.night .meme-item { 
+    background: rgba(255,255,255,0.1);
+    border-color: #9370db;
+  }
+  .meme-item:hover { 
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 15px 40px rgba(214, 106, 148, 0.4);
+  }
+  .meme-item img { 
+    width: 100%; 
+    height: 300px; 
+    object-fit: cover;
+    background: #f0f0f0;
+  }
+  .meme-title { 
+    padding: 15px; 
+    font-size: 1em; 
+    text-align: center;
+    font-weight: bold;
+    color: #5a3a4a;
+    background: linear-gradient(135deg, #fff0f5, #ffe4ec);
+  }
+  body.night .meme-title {
+    background: linear-gradient(135deg, #3d3560, #4a3d70);
+    color: #e8e8e8;
+  }
+  .meme-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
 
   .collect-game-area {
     position: relative;
@@ -371,108 +404,6 @@
     box-shadow: 0 6px 20px rgba(144, 238, 144, 0.7);
   }
 
-  .chat-container {
-    background: linear-gradient(135deg, #fff0f5, #ffe4ec);
-    border-radius: 20px;
-    padding: 20px;
-    margin: 20px 0;
-    border: 3px solid #ff8fb1;
-    display: flex;
-    flex-direction: column;
-  }
-  body.night .chat-container {
-    background: linear-gradient(135deg, #2d2d4a, #3d3d5c);
-    border-color: #9370db;
-  }
-  .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    background: rgba(255,255,255,0.5);
-    border-radius: 15px;
-    margin-bottom: 15px;
-    max-height: 400px;
-    min-height: 200px;
-  }
-  body.night .chat-messages {
-    background: rgba(255,255,255,0.05);
-  }
-
-  .chat-message {
-    margin: 8px 0;
-    padding: 10px 14px;
-    border-radius: 18px;
-    max-width: 75%;
-    word-wrap: break-word;
-    font-size: 0.95em;
-    line-height: 1.4;
-    animation: messageAppear 0.3s ease-out;
-    white-space: pre-wrap;
-  }
-  @keyframes messageAppear {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .chat-message.user {
-    background: linear-gradient(135deg, #ff8fb1, #d66a94);
-    color: white;
-    margin-left: auto;
-    text-align: left;
-    border-bottom-right-radius: 4px;
-  }
-
-  .chat-message.otter {
-    background: linear-gradient(135deg, #e8d5f5, #d4b8e8);
-    color: #3a2a4a;
-    margin-right: auto;
-    text-align: left;
-    border-bottom-left-radius: 4px;
-  }
-  body.night .chat-message.otter {
-    background: linear-gradient(135deg, #3d3560, #4a3d70);
-    color: #e0d0f0;
-  }
-
-  .chat-input-container {
-    display: flex;
-    gap: 10px;
-  }
-  .chat-input {
-    flex: 1;
-    padding: 12px 20px;
-    border: 2px solid #ff8fb1;
-    border-radius: 25px;
-    font-family: inherit;
-    font-size: 1em;
-    background: white;
-    color: #5a3a4a;
-  }
-  body.night .chat-input {
-    background: rgba(255,255,255,0.1);
-    border-color: #9370db;
-    color: #e8e8e8;
-  }
-  .chat-send {
-    background: linear-gradient(135deg, #ff8fb1, #d66a94);
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: bold;
-    transition: all 0.3s;
-  }
-  .chat-send:hover { transform: scale(1.05); }
-  .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
-  .chat-typing {
-    font-size: 0.85em;
-    color: #888;
-    margin-left: 10px;
-    font-style: italic;
-  }
-
   .easter-egg {
     position: fixed;
     width: 30px;
@@ -513,13 +444,26 @@
     box-shadow: 0 10px 30px rgba(214, 106, 148, 0.5);
   }
 
+  .loading {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 4px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #ff6b6b;
+    animation: spin 1s ease-in-out infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
   @media (max-width: 768px) {
     h1 { font-size: 2.5em; }
     .otter-container { width: 80px; height: 80px; }
     .otter { font-size: 50px; }
     .controls { top: 10px; right: 10px; }
     .control-btn { padding: 8px 12px; font-size: 0.8em; }
-    .chat-message { max-width: 85%; font-size: 0.9em; }
+    .meme-gallery { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -563,9 +507,10 @@
   </div>
 
   <div class="card">
-    <h2>😂 Смешные мемы для Сони</h2>
-    <p>Свежие мемы из интернета! Кликай чтобы открыть</p>
-    <button class="btn-music" onclick="loadMemes()">🔄 Загрузить мемы</button>
+    <h2>😂 РУССКИЕ МЕМЫ - ОЧЕНЬ СМЕШНЫЕ!</h2>
+    <p><span class="meme-badge">🔥 ТОП РУНЕТА</span></p>
+    <p>Самые угарные мемы из русского интернета! Кликай чтобы открыть</p>
+    <button class="btn-music" onclick="loadMemes()">🔄 Загрузить русские мемы</button>
     <div class="meme-gallery" id="memeGallery"></div>
   </div>
 
@@ -574,7 +519,7 @@
     <p>Кликай на лилии, чтобы менять их цвет!</p>
     <div class="coloring-area">
       <div class="lily-colorable pink" onclick="changeLilyColor(this)">🌷</div>
-      <div class="lily-colorable pink" onclick="changeLilyColor(this)">🌺</div>
+      <div class="lily-colorable pink" onclick="changeLilyColor(this)"></div>
       <div class="lily-colorable pink" onclick="changeLilyColor(this)">🌸</div>
       <div class="lily-colorable pink" onclick="changeLilyColor(this)">💮</div>
     </div>
@@ -590,21 +535,6 @@
       <button class="control-btn" onclick="clearDiary()">🗑️ Очистить всё</button>
     </div>
     <div id="diaryEntries"></div>
-  </div>
-
-  <div class="card">
-    <h2>🤖 Чат с умной выдрой</h2>
-    <p>Выдра подключена к настоящему ИИ! Она понимает тебя, помогает и отвечает 🦦✨</p>
-    <div class="chat-container">
-      <div class="chat-messages" id="chatMessages">
-        <div class="chat-message otter">Привет, Соня! Я твоя умная выдра! 🦦 Чем могу помочь?</div>
-      </div>
-      <div class="chat-typing" id="typingIndicator" style="display: none;">Выдра печатает...</div>
-      <div class="chat-input-container">
-        <input type="text" class="chat-input" id="chatInput" placeholder="Напиши сообщение..." onkeypress="if(event.key==='Enter')sendMessage()">
-        <button class="chat-send" id="sendBtn" onclick="sendMessage()">Отправить</button>
-      </div>
-    </div>
   </div>
 
   <div class="card">
@@ -629,8 +559,8 @@
 </div>
 
 <footer>
-  Сделано с любовью для Сони 🌷 🐾 🦦<br>
-  <small>Найди все 4 пасхалки! 👀</small>
+  Сделано с любовью для Сони 🌷 🐾 <br>
+  <small>Найди все 4 пасхалки!  | Русские мемы из Пикабу и Reddit</small>
 </footer>
 
 <script>
@@ -716,7 +646,7 @@ function playRealisticOtterSound(type = 'chirp') {
 // ==================== ВЫДРА ====================
 const otterContainer = document.getElementById('otterContainer');
 let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
-const otterBubbles = ['Привет! 💕','Ты супер! 🌟','Обнимаю! 🤗','Мур-мур! 🐾','Люблю лилии! 🌷','Плыву! 🌊','Ура! 🎉','Хи-хи! 😄'];
+const otterBubbles = ['Привет! ','Ты супер! 🌟','Обнимаю! 🤗','Мур-мур! 🐾','Люблю лилии! ','Плыву! 🌊','Ура! 🎉','Хи-хи! 😄'];
 let bubbleIndex = 0;
 
 function showOtterBubble(text) {
@@ -762,12 +692,12 @@ document.addEventListener('touchend', () => { isDragging = false; otterContainer
 const compliments = [
   "Соня, ты сияешь ярче тысячи звёзд! ✨",
   "Твоя улыбка освещает весь мир! 🌟",
-  "Ты добрее всех на свете! 💖",
+  "Ты добрее всех на свете! ",
   "Ты вдохновляешь как весенние лилии! 🌷",
   "Ты такая же милая, как выдра! 🦦",
   "Ты делаешь этот мир лучше! 🌈",
   "Ты невероятная! 🌺",
-  "Ты заслуживаешь всего самого лучшего! 💫",
+  "Ты заслуживаешь всего самого лучшего! ",
   "Ты как котик — всегда греешь душу! 🐱",
   "Ты прекрасна во всём! 🌸"
 ];
@@ -812,118 +742,93 @@ function clearDiary() {
 }
 loadDiaryEntries();
 
-// ==================== МЕМЫ ====================
+// ==================== РУССКИЕ МЕМЫ ====================
 async function loadMemes() {
   const g = document.getElementById('memeGallery');
-  g.innerHTML = '<p>Загружаю мемы... ⏳</p>';
+  g.innerHTML = '<p style="font-size: 1.2em; padding: 40px;">Загружаю русские мемы... <span class="loading"></span></p>';
+  
   try {
     const memes = [];
-    for (let i = 0; i < 6; i++) {
-      const r = await fetch('https://meme-api.com/gimme');
-      if (r.ok) memes.push(await r.json());
+    
+    // Пробуем разные русские источники
+    const sources = [
+      'https://www.reddit.com/r/pikabu/hot.json?limit=10',
+      'https://www.reddit.com/r/russian_memes/hot.json?limit=10',
+      'https://www.reddit.com/r/ProgrammerHumor/hot.json?limit=5'
+    ];
+    
+    for (const source of sources) {
+      try {
+        const response = await fetch(source);
+        if (response.ok) {
+          const data = await response.json();
+          const posts = data.data.children.filter(post => 
+            post.data.post_hint === 'image' || 
+            post.data.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+          );
+          
+          posts.forEach(post => {
+            memes.push({
+              title: post.data.title || 'Без названия',
+              url: post.data.url || post.data.thumbnail,
+              link: `https://reddit.com${post.data.permalink}`
+            });
+          });
+        }
+      } catch (e) {
+        console.log('Failed to load from:', source);
+      }
     }
+    
+    // Если Reddit не работает, пробуем meme-api
+    if (memes.length === 0) {
+      const subs = ['pikabu', 'russian_memes', 'me_irl_ru'];
+      for (const sub of subs) {
+        try {
+          const r = await fetch(`https://meme-api.com/gimme/${sub}`);
+          if (r.ok) {
+            const data = await r.json();
+            memes.push({
+              title: data.title || 'Мем',
+              url: data.url,
+              link: data.postLink
+            });
+          }
+        } catch (e) {}
+      }
+    }
+    
+    // Если всё ещё пусто - показываем заглушку
+    if (memes.length === 0) {
+      g.innerHTML = '<p style="font-size: 1.2em; padding: 40px;">😢 Не удалось загрузить мемы. Попробуй обновить страницу!</p>';
+      return;
+    }
+    
+    // Показываем мемы (максимум 12)
     g.innerHTML = '';
-    memes.forEach(m => {
-      const d = document.createElement('div'); d.className = 'meme-item';
-      d.innerHTML = `<img src="${m.url}" alt="${m.title}" onclick="window.open('${m.postLink}','_blank')"><div class="meme-title">${m.title}</div>`;
+    memes.slice(0, 12).forEach((m, i) => {
+      const d = document.createElement('div');
+      d.className = 'meme-item';
+      d.innerHTML = `
+        <img src="${m.url}" alt="${m.title}" onerror="this.src='https://via.placeholder.com/300x300/ffb6c1/ffffff?text=Мем+${i+1}'" loading="lazy">
+        <div class="meme-title">${m.title.length > 80 ? m.title.substring(0, 80) + '...' : m.title}</div>
+      `;
+      d.onclick = () => window.open(m.link || m.url, '_blank');
       g.appendChild(d);
     });
-  } catch { g.innerHTML = '<p>Не удалось загрузить мемы 😢 Попробуй ещё раз!</p>'; }
-}
-
-// ==================== AI ЧАТ С ВЫДРОЙ (POLLINATIONS AI) ====================
-const chatMessagesEl = document.getElementById('chatMessages');
-const chatInput = document.getElementById('chatInput');
-const typingIndicator = document.getElementById('typingIndicator');
-const sendBtn = document.getElementById('sendBtn');
-
-// Системный промпт для выдры
-const systemPrompt = `Ты милая выдра-помощник по имени Выдрочка. Ты общаешься с Соней.
-Правила:
-- Говори по-русски
-- Используй эмодзи, но не слишком много
-- Будь дружелюбной, весёлой и заботливой
-- Ты любишь лилии, котиков, выдр и мемы
-- Отвечай как обычный человек в чате — естественно и живо
-- Можешь писать длинные ответы если нужно, но не пиши списки и не структурируй текст как бот
-- Пиши как подруга, а не как ассистент
-- Не начинай ответы с "Конечно!" или "Отличный вопрос!"
-- Помни контекст разговора`;
-
-// История разговора (последние сообщения)
-let conversationHistory = [];
-
-async function sendMessage() {
-  const message = chatInput.value.trim();
-  if (!message) return;
-
-  addMessage(message, 'user');
-  chatInput.value = '';
-  
-  // Добавляем сообщение в историю
-  conversationHistory.push({ role: 'user', content: message });
-
-  typingIndicator.style.display = 'block';
-  sendBtn.disabled = true;
-
-  try {
-    // Формируем промпт с контекстом
-    let fullPrompt = systemPrompt + '\n\n';
     
-    // Добавляем последние 10 сообщений для контекста
-    const recentMessages = conversationHistory.slice(-10);
-    recentMessages.forEach(msg => {
-      if (msg.role === 'user') {
-        fullPrompt += `Соня: ${msg.content}\n`;
-      } else {
-        fullPrompt += `Выдрочка: ${msg.content}\n`;
-      }
+    // Эффект конфетти
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.3 },
+      colors: ['#ff6b6b', '#ff8e8e', '#ffb6c1', '#ffd700']
     });
     
-    fullPrompt += `Выдрочка:`;
-
-    // Используем Pollinations AI через GET запрос
-    const encodedPrompt = encodeURIComponent(fullPrompt);
-    const url = `https://text.pollinations.ai/${encodedPrompt}?model=openai`;
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    
-    const reply = await response.text();
-    
-    if (!reply || reply.trim() === '') {
-      throw new Error('Empty response');
-    }
-
-    // Добавляем ответ в историю
-    conversationHistory.push({ role: 'assistant', content: reply });
-    addMessage(reply, 'otter');
-    playRealisticOtterSound('chirp');
-
-    // Ограничиваем историю
-    if (conversationHistory.length > 20) {
-      conversationHistory = conversationHistory.slice(-20);
-    }
-
-  } catch (err) {
-    console.error('AI Error:', err);
-    conversationHistory.pop(); // Удаляем последнее сообщение при ошибке
-    addMessage('Упс, что-то пошло не так 🦦 Попробуй ещё раз! (Ошибка: ' + err.message + ')', 'otter');
+  } catch (error) {
+    console.error('Meme load error:', error);
+    g.innerHTML = '<p style="font-size: 1.2em; padding: 40px;">😢 Ошибка загрузки мемов. Попробуй ещё раз!</p>';
   }
-
-  typingIndicator.style.display = 'none';
-  sendBtn.disabled = false;
-}
-
-function addMessage(text, sender) {
-  const div = document.createElement('div');
-  div.className = `chat-message ${sender}`;
-  div.textContent = text;
-  chatMessagesEl.appendChild(div);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
 // ==================== ИГРА "СОБЕРИ БУКЕТ" ====================
@@ -961,7 +866,7 @@ function startCollectGame() {
 }
 function stopCollectGame() {
   gameRunning = false; clearInterval(lilyInterval);
-  document.getElementById('collectGameArea').innerHTML = '<div class="basket" id="basket">🧺</div>';
+  document.getElementById('collectGameArea').innerHTML = '<div class="basket" id="basket"></div>';
 }
 
 // ==================== ПАСХАЛКИ ====================
@@ -980,7 +885,7 @@ const facts = [
   "Выдры держатся за лапки во сне, чтобы не уплыть друг от друга 💞",
   "Коты мурлычут на частоте, которая помогает заживлять кости 🐱",
   "Лилии могут жить более 50 лет при хорошем уходе 🌷",
-  "У выдр есть любимый камень в кармашке под лапкой 🦦",
+  "У выдр есть любимый камень в кармашке под лапкой ",
   "Котики спят 70% своей жизни 😴",
   "Белая лилия — символ нежности, как ты, Соня 🌸",
   "Выдры задерживают дыхание на 8 минут 🫧",
